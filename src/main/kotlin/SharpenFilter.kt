@@ -5,10 +5,10 @@ import java.io.File
 import javax.imageio.ImageIO
 
 fun main() {
-    // Load the image
     val inputImagePath = "src/main/resources/images/eye.jpeg"
+    val inputImagePath2 = "src/main/resources/images/lion.jpeg"
     val outputImagePath = "src/main/resources/images/output_image2.jpeg"
-    val originalImage = ImageIO.read(File(inputImagePath))
+    val originalImage = ImageIO.read(File(inputImagePath2))
 
     if (originalImage != null) {
         val kernel = arrayOf(
@@ -17,10 +17,8 @@ fun main() {
             intArrayOf(0, -1, 0)
         )
 
-        // Apply convolution to the image
         val convolvedImage = applyConvolution(originalImage, kernel)
 
-        // Save the result
         ImageIO.write(convolvedImage, "jpg", File(outputImagePath))
     } else {
         println("Failed to load the image.")
@@ -32,15 +30,12 @@ internal fun applyConvolution(inputImage: BufferedImage, kernel: Array<IntArray>
     val height = inputImage.height
     val resultImage = BufferedImage(width, height, BufferedImage.TYPE_INT_RGB)
 
-    // Iterate over each pixel in the image
     for (x in 1 until width - 1) {
         for (y in 1 until height - 1) {
-            // Apply convolution to each color channel separately (assuming RGB)
             val red = applyConvolutionToChannel(inputImage, x, y, kernel, 'r')
             val green = applyConvolutionToChannel(inputImage, x, y, kernel, 'g')
             val blue = applyConvolutionToChannel(inputImage, x, y, kernel, 'b')
 
-            // Combine the results and set the pixel in the result image
             resultImage.setRGB(x, y, Color(red, green, blue).rgb)
         }
     }
@@ -57,7 +52,6 @@ private fun applyConvolutionToChannel(
 ): Int {
     var sum = 0
 
-    // Iterate over the kernel and calculate the convolution sum
     for (i in -1..1) {
         for (j in -1..1) {
             val pixelValue = when (channel) {
@@ -70,6 +64,5 @@ private fun applyConvolutionToChannel(
         }
     }
 
-    // Ensure the result is in the valid color range [0, 255]
     return sum.coerceIn(0, 255)
 }

@@ -10,8 +10,9 @@ fun main() {
     val image1 = "src/main/resources/images/eye.jpeg"
     val image2 = "src/main/resources/images/test.png"
     val image3 = "src/main/resources/images/face.jpg"
+    val image4 = "src/main/resources/images/lion.jpeg"
     val outputImagePath = "src/main/resources/images/output_image.jpeg"
-    val originalImage = ImageIO.read(File(image1))
+    val originalImage = ImageIO.read(File(image4))
 
     if (originalImage != null) {
         // Define the size of the Gaussian kernel (choose an odd size)
