@@ -1,7 +1,9 @@
 package com.example.finalpaper
 
 import androidx.camera.view.LifecycleCameraController
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
 import androidx.navigation.NavController
 
 
@@ -10,5 +12,5 @@ fun MagnifierScreen(
     controller: LifecycleCameraController,
     navController: NavController
 ) {
-    CameraPreview(controller = controller)
+    CameraPreview(controller = controller, Modifier.fillMaxSize())
 }
