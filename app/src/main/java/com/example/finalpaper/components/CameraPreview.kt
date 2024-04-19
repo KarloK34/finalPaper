@@ -1,4 +1,4 @@
-package com.example.finalpaper
+package com.example.finalpaper.components
 
 import androidx.camera.view.LifecycleCameraController
 import androidx.camera.view.PreviewView
@@ -21,6 +21,7 @@ fun CameraPreview(
 ) {
     val lifecycleOwner = LocalLifecycleOwner.current
     val zoomState = remember { mutableFloatStateOf(1f) }
+
     BoxWithConstraints(
         modifier = modifier
     ) {
@@ -42,5 +43,6 @@ fun CameraPreview(
                 }
                 .transformable(state, enabled = false)
         )
+
     }
 }

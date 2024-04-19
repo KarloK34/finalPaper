@@ -1,4 +1,4 @@
-package com.example.finalpaper
+package com.example.finalpaper.screens
 
 import android.Manifest
 import android.content.Intent
@@ -21,6 +21,10 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.core.app.ActivityCompat
 import androidx.navigation.NavController
+import com.example.finalpaper.CameraPermissionTextProvider
+import com.example.finalpaper.PermissionDialog
+import com.example.finalpaper.PermissionsViewModel
+import com.example.finalpaper.Screen
 
 @Composable
 fun HomeScreen(
