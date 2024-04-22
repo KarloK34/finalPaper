@@ -10,7 +10,9 @@ import androidx.compose.ui.unit.dp
 
 @Composable
 fun BottomBar(controller: LifecycleCameraController) {
-    Row(modifier = Modifier.fillMaxWidth().height(30.dp)) {
+    Row(modifier = Modifier
+        .fillMaxWidth()
+        .height(30.dp)) {
         Torch(controller)
     }
 }
