@@ -21,10 +21,7 @@ fun MagnifierScreen(
 ) {
     Box(modifier = Modifier.fillMaxSize()) {
         CameraPreview(controller = controller, Modifier.fillMaxSize())
-        Column (modifier = Modifier.align(Alignment.BottomCenter)
-            .padding(40.dp)){
-            BottomBar(controller)
-        }
+
 
     }
 }

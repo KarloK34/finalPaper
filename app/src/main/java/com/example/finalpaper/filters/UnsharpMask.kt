@@ -4,12 +4,13 @@ import android.graphics.Bitmap
 import android.graphics.Color
 import androidx.camera.core.ImageProxy
 import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.asAndroidBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import kotlin.math.exp
 import kotlin.math.roundToInt
 
-fun applyUnsharpMaskFilter(image: ImageProxy): ImageBitmap {
-    val inputBitmap = image.toBitmap()
+fun applyUnsharpMaskFilter(image: ImageBitmap): ImageBitmap {
+    val inputBitmap = image.asAndroidBitmap()
 
     val kernelSize = 5
     val strength = 1.0
