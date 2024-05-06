@@ -42,7 +42,7 @@ class MainActivity : ComponentActivity() {
                     }
 
                     composable(Screen.Magnifier.route) {
-                        MagnifierScreen(controller, navController)
+                        MagnifierScreen(controller)
                     }
                 }
             }

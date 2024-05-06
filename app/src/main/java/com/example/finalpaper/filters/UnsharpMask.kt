@@ -2,7 +2,8 @@ package com.example.finalpaper.filters
 
 import android.graphics.Bitmap
 import android.graphics.Color
-import androidx.camera.core.ImageProxy
+import android.graphics.Matrix
+import android.util.Log
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asAndroidBitmap
 import androidx.compose.ui.graphics.asImageBitmap
@@ -10,13 +11,16 @@ import kotlin.math.exp
 import kotlin.math.roundToInt
 
 fun applyUnsharpMaskFilter(image: ImageBitmap): ImageBitmap {
-    val inputBitmap = image.asAndroidBitmap()
-
+    Log.d("Test", "Pocetak")
+    val originalWidth = image.width
+    val originalHeight = image.height
+    val targetWidth = originalWidth / 3
+    val targetHeight = originalHeight / 3
+    val inputBitmap = downsampleImage(image,targetWidth,targetHeight)
     val kernelSize = 5
     val strength = 1.0
 
     val gaussianKernel = createGaussianKernel(kernelSize)
-
     return applyUnsharpMask(inputBitmap, gaussianKernel, strength).asImageBitmap()
 }
 
@@ -25,25 +29,33 @@ fun applyUnsharpMask(inputBitmap: Bitmap, kernel: Array<DoubleArray>, strength: 
 
     val width = inputBitmap.width
     val height = inputBitmap.height
-    val resultBitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+    val resultPixels = IntArray(width * height)
 
-    for (x in 0 until width) {
-        for (y in 0 until height) {
-            val originalColor = inputBitmap.getPixel(x, y)
-            val blurredColor = blurredBitmap.getPixel(x, y)
+    val inputPixels = IntArray(width * height)
+    inputBitmap.getPixels(inputPixels, 0, width, 0, 0, width, height)
 
-            val highPassRed = (Color.red(originalColor) - Color.red(blurredColor)).coerceIn(0, 255)
-            val highPassGreen = (Color.green(originalColor) - Color.green(blurredColor)).coerceIn(0, 255)
-            val highPassBlue = (Color.blue(originalColor) - Color.blue(blurredColor)).coerceIn(0, 255)
+    val blurredPixels = IntArray(width * height)
+    blurredBitmap.getPixels(blurredPixels, 0, width, 0, 0, width, height)
 
-            val sharpenedRed = (Color.red(originalColor) + strength * highPassRed).roundToInt().coerceIn(0, 255)
-            val sharpenedGreen = (Color.green(originalColor) + strength * highPassGreen).roundToInt().coerceIn(0, 255)
-            val sharpenedBlue = (Color.blue(originalColor) + strength * highPassBlue).roundToInt().coerceIn(0, 255)
+    for (i in 0 until width * height) {
+        val originalColor = inputPixels[i]
+        val blurredColor = blurredPixels[i]
 
-            resultBitmap.setPixel(x, y, Color.rgb(sharpenedRed, sharpenedGreen, sharpenedBlue))
-        }
+        val highPassRed = (Color.red(originalColor) - Color.red(blurredColor)).coerceIn(0, 255)
+        val highPassGreen = (Color.green(originalColor) - Color.green(blurredColor)).coerceIn(0, 255)
+        val highPassBlue = (Color.blue(originalColor) - Color.blue(blurredColor)).coerceIn(0, 255)
+
+        val sharpenedRed = (Color.red(originalColor) + strength * highPassRed).roundToInt().coerceIn(0, 255)
+        val sharpenedGreen = (Color.green(originalColor) + strength * highPassGreen).roundToInt().coerceIn(0, 255)
+        val sharpenedBlue = (Color.blue(originalColor) + strength * highPassBlue).roundToInt().coerceIn(0, 255)
+
+        resultPixels[i] = Color.rgb(sharpenedRed, sharpenedGreen, sharpenedBlue)
     }
 
+    val resultBitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+    resultBitmap.setPixels(resultPixels, 0, width, 0, 0, width, height)
+
+    Log.d("Test", "Kraj")
     return resultBitmap
 }
 
@@ -111,4 +123,14 @@ fun applyConvolutionToChannel(
     }
 
     return sum.coerceIn(0.0, 255.0).toInt()
+}
+fun downsampleImage(image: ImageBitmap, targetWidth: Int, targetHeight: Int): Bitmap {
+    val inputBitmap = image.asAndroidBitmap()
+    val width = inputBitmap.width
+    val height = inputBitmap.height
+
+    val matrix = Matrix()
+    matrix.postScale(targetWidth.toFloat() / width, targetHeight.toFloat() / height)
+
+    return Bitmap.createBitmap(inputBitmap, 0, 0, width, height, matrix, true)
 }

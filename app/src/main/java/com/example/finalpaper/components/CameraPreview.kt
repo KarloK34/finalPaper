@@ -29,6 +29,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -42,6 +43,15 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import com.example.finalpaper.R
+import com.example.finalpaper.filters.applySobelBlueChannelFilter
+import com.example.finalpaper.filters.applySobelFilter
+import com.example.finalpaper.filters.applyUnsharpMaskFilter
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.async
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.util.concurrent.Executors
 
 @Composable
@@ -51,6 +61,7 @@ fun CameraPreview(
 ) {
     val lifecycleOwner = LocalLifecycleOwner.current
     var capturedImageBitmap by remember { mutableStateOf<ImageBitmap?>(null) }
+    var filteredImageBitmap by remember { mutableStateOf<ImageBitmap?>(null) }
     val cameraExecutor = Executors.newSingleThreadExecutor()
     var isFrozen by remember { mutableStateOf(false) }
 
@@ -63,7 +74,10 @@ fun CameraPreview(
                 contentScale = ContentScale.Crop
             )
             IconButton(
-                onClick = { isFrozen = false }, modifier = Modifier
+                onClick = {
+                    isFrozen = false
+                    filteredImageBitmap = null
+                }, modifier = Modifier
                     .clip(RoundedCornerShape(16.dp))
                     .background(
                         color = Color.LightGray
@@ -74,8 +88,13 @@ fun CameraPreview(
                     contentDescription = "Go Back"
                 )
             }
-            Button(onClick = { /*TODO*/ }, modifier = Modifier.align(Alignment.BottomEnd)) {
-                Text(text = "Apply filter")
+            if (filteredImageBitmap != null) {
+                Button(
+                    onClick = { capturedImageBitmap = filteredImageBitmap },
+                    modifier = Modifier.align(Alignment.BottomEnd)
+                ) {
+                    Text(text = "Apply filter")
+                }
             }
         } else {
             AndroidView(
@@ -113,6 +132,15 @@ fun CameraPreview(
                                         capturedImageBitmap = imageBitmap
                                         isFrozen = true
                                         image.close()
+
+                                        if (imageBitmap != null) {
+                                            GlobalScope.launch(Dispatchers.Default) {
+                                                val filteredImage = applySobelFilter(imageBitmap)
+                                                withContext(Dispatchers.Main) {
+                                                    filteredImageBitmap = filteredImage
+                                                }
+                                            }
+                                        }
                                     }
 
                                     override fun onError(exception: ImageCaptureException) {
