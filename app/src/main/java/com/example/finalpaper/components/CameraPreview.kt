@@ -43,6 +43,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import com.example.finalpaper.R
+import com.example.finalpaper.filters.applySharpenFilter
 import com.example.finalpaper.filters.applySobelBlueChannelFilter
 import com.example.finalpaper.filters.applySobelFilter
 import com.example.finalpaper.filters.applyUnsharpMaskFilter
@@ -135,7 +136,7 @@ fun CameraPreview(
 
                                         if (imageBitmap != null) {
                                             GlobalScope.launch(Dispatchers.Default) {
-                                                val filteredImage = applySobelFilter(imageBitmap)
+                                                val filteredImage = applySharpenFilter(imageBitmap)
                                                 withContext(Dispatchers.Main) {
                                                     filteredImageBitmap = filteredImage
                                                 }

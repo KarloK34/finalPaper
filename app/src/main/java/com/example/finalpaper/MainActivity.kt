@@ -11,13 +11,12 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.finalpaper.screens.HomeScreen
 import com.example.finalpaper.screens.MagnifierScreen
+import com.example.finalpaper.screens.MapScreen
+import com.example.finalpaper.screens.Screen
 import com.example.finalpaper.ui.theme.FinalPaperTheme
 
 class MainActivity : ComponentActivity() {
-    //for more permissions:
-    /*private val permissionsToRequest = arrayOf(
-        somePermissions
-    )*/
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -43,6 +42,10 @@ class MainActivity : ComponentActivity() {
 
                     composable(Screen.Magnifier.route) {
                         MagnifierScreen(controller)
+                    }
+
+                    composable(Screen.Navigation.route) {
+                        MapScreen()
                     }
                 }
             }

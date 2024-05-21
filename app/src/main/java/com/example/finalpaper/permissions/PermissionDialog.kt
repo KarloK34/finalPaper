@@ -1,11 +1,13 @@
-package com.example.finalpaper
+package com.example.finalpaper.permissions
 
+import android.content.Intent
+import android.provider.Settings
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Divider
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -28,7 +30,7 @@ fun PermissionDialog(
             Column(
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Divider()
+                HorizontalDivider()
                 Text(
                     text = if (isPermanentlyDeclined) {
                         "Grant permission"
@@ -62,19 +64,9 @@ fun PermissionDialog(
     )
 
 }
-
-
-interface PermissionTextProvider {
-    fun getDescription(isPermanentlyDeclined: Boolean): String
+fun openAppSettings(context: android.content.Context) {
+    val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
+    intent.data = android.net.Uri.fromParts("package", context.packageName, null)
+    context.startActivity(intent)
 }
 
-class CameraPermissionTextProvider : PermissionTextProvider {
-    override fun getDescription(isPermanentlyDeclined: Boolean): String {
-        return if (isPermanentlyDeclined) {
-            "It seems you've permanently declined camera permission. " +
-                    "You can go to the app settings to grant it."
-        } else {
-            "This app needs access to your camera."
-        }
-    }
-}

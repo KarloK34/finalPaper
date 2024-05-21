@@ -1,4 +1,4 @@
-package com.example.finalpaper
+package com.example.finalpaper.permissions
 
 import androidx.compose.runtime.mutableStateListOf
 import androidx.lifecycle.ViewModel

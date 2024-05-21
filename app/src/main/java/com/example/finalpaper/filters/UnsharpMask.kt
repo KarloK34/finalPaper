@@ -9,13 +9,14 @@ import androidx.compose.ui.graphics.asAndroidBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import kotlin.math.exp
 import kotlin.math.roundToInt
+import kotlin.math.sqrt
 
 fun applyUnsharpMaskFilter(image: ImageBitmap): ImageBitmap {
     Log.d("Test", "Pocetak")
     val originalWidth = image.width
     val originalHeight = image.height
-    val targetWidth = originalWidth / 3
-    val targetHeight = originalHeight / 3
+    val targetWidth = originalWidth / 2
+    val targetHeight = originalHeight / 2
     val inputBitmap = downsampleImage(image,targetWidth,targetHeight)
     val kernelSize = 5
     val strength = 1.0
@@ -69,7 +70,7 @@ fun createGaussianKernel(size: Int): Array<DoubleArray> {
         for (j in 0 until size) {
             val x = i - size / 2
             val y = j - size / 2
-            kernel[i][j] = exp(-(x * x + y * y) / twoSigmaSquared) / (Math.PI * twoSigmaSquared)
+            kernel[i][j] = exp(-(x * x + y * y) / twoSigmaSquared) / (sqrt(2*Math.PI) * sigma)
             sum += kernel[i][j]
         }
     }
@@ -97,7 +98,7 @@ fun applyConvolution(inputBitmap: Bitmap, kernel: Array<DoubleArray>): Bitmap {
             resultBitmap.setPixel(x, y, Color.rgb(red, green, blue))
         }
     }
-
+    Log.d("Test", "Kraj")
     return resultBitmap
 }
 
@@ -124,6 +125,7 @@ fun applyConvolutionToChannel(
 
     return sum.coerceIn(0.0, 255.0).toInt()
 }
+
 fun downsampleImage(image: ImageBitmap, targetWidth: Int, targetHeight: Int): Bitmap {
     val inputBitmap = image.asAndroidBitmap()
     val width = inputBitmap.width

@@ -1,8 +1,13 @@
 plugins {
     alias(libs.plugins.androidApplication)
     alias(libs.plugins.jetbrainsKotlinAndroid)
+    id("com.google.android.libraries.mapsplatform.secrets-gradle-plugin")
 }
+secrets {
+    propertiesFileName = "secrets.properties"
 
+    defaultPropertiesFileName = "local.defaults.properties"
+}
 android {
     namespace = "com.example.finalpaper"
     compileSdk = 34
@@ -68,6 +73,10 @@ dependencies {
     androidTestImplementation(libs.androidx.ui.test.junit4)
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
+
+    implementation(libs.maps.compose)
+    implementation(libs.maps.compose.utils)
+    implementation(libs.maps.compose.widgets)
 
     implementation(libs.androidx.camera.core)
     implementation(libs.androidx.camera.camera2)
