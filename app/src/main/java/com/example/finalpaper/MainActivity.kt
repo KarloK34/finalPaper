@@ -14,10 +14,10 @@ import com.example.finalpaper.screens.MagnifierScreen
 import com.example.finalpaper.screens.MapScreen
 import com.example.finalpaper.screens.Screen
 import com.example.finalpaper.ui.theme.FinalPaperTheme
+import com.google.android.gms.location.LocationServices
+import com.google.android.libraries.places.api.Places
 
 class MainActivity : ComponentActivity() {
-
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
@@ -45,7 +45,7 @@ class MainActivity : ComponentActivity() {
                     }
 
                     composable(Screen.Navigation.route) {
-                        MapScreen()
+                        MapScreen(navController)
                     }
                 }
             }
