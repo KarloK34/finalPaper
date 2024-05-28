@@ -89,4 +89,7 @@ dependencies {
     implementation(libs.androidx.camera.extensions)
 
     implementation (libs.androidx.navigation.compose)
+
+    implementation(libs.androidx.room.runtime)
+    annotationProcessor(libs.androidx.room.compiler)
 }
