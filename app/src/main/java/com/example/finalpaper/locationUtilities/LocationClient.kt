@@ -1,4 +1,4 @@
-package com.example.finalpaper
+package com.example.finalpaper.locationUtilities
 
 import android.location.Location
 import kotlinx.coroutines.flow.Flow

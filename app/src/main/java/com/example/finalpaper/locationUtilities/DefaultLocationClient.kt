@@ -1,4 +1,4 @@
-package com.example.finalpaper
+package com.example.finalpaper.locationUtilities
 
 import android.annotation.SuppressLint
 import android.content.Context

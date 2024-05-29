@@ -1,4 +1,4 @@
-package com.example.finalpaper
+package com.example.finalpaper.locationUtilities
 
 import android.content.Context
 import android.content.pm.PackageManager

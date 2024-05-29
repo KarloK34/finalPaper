@@ -1,7 +1,6 @@
 package com.example.finalpaper.screens
 
 import android.Manifest
-import android.animation.ValueAnimator
 import android.content.Context
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
@@ -13,9 +12,18 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Call
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -24,14 +32,18 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.core.animation.doOnCancel
-import androidx.core.animation.doOnEnd
+import androidx.compose.ui.unit.dp
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
-import com.example.finalpaper.DefaultLocationClient
+import com.example.finalpaper.MainActivity
+import com.example.finalpaper.locationUtilities.DefaultLocationClient
 import com.example.finalpaper.R
+import com.example.finalpaper.voiceRecordingRoom.VoiceRecording
+import com.example.finalpaper.voiceRecordingRoom.VoiceRecordingEvent
+import com.example.finalpaper.voiceRecordingRoom.VoiceRecordingViewModel
+import com.example.finalpaper.locationUtilities.AnimationQueue
 import com.example.finalpaper.permissions.AccessFineLocationPermissionTextProvider
 import com.example.finalpaper.permissions.CameraPermissionTextProvider
 import com.example.finalpaper.permissions.PermissionDialog
@@ -50,8 +62,7 @@ import com.google.maps.android.compose.rememberCameraPositionState
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlin.coroutines.resume
-import kotlin.coroutines.suspendCoroutine
+import kotlinx.coroutines.withContext
 
 @Composable
 fun MapScreen(navController: NavHostController) {
@@ -61,6 +72,11 @@ fun MapScreen(navController: NavHostController) {
     var currentLocation by remember { mutableStateOf<LatLng?>(null) }
     var isMapLoaded by remember { mutableStateOf(false) }
     var loading by remember { mutableStateOf(true) }
+
+    val dao = remember { MainActivity.DatabaseProvider.getDatabase(context).voiceRecordingDao() }
+    val voiceRecordingViewModel = remember { VoiceRecordingViewModel(dao, context) }
+    val state by voiceRecordingViewModel.state.collectAsState()
+    var nearbyRecordings by remember { mutableStateOf<List<VoiceRecording>>(emptyList()) }
 
     val fusedLocationClient = remember { LocationServices.getFusedLocationProviderClient(context) }
     val locationClient = remember { DefaultLocationClient(context, fusedLocationClient) }
@@ -161,11 +177,72 @@ fun MapScreen(navController: NavHostController) {
                         animationQueue.addToQueue(newLatLng)
                     }
                 }
+                FloatingActionButton(
+                    onClick = {
+                        if (state.isAddingVoiceRecording) {
+                            voiceRecordingViewModel.stopRecording()
+                            voiceRecordingViewModel.onEvent(
+                                VoiceRecordingEvent.SetLatitude(
+                                    currentLocation!!.latitude
+                                )
+                            )
+                            voiceRecordingViewModel.onEvent(
+                                VoiceRecordingEvent.SetLongitude(
+                                    currentLocation!!.longitude
+                                )
+                            )
+                            voiceRecordingViewModel.onEvent(VoiceRecordingEvent.SetTimestamp(System.currentTimeMillis()))
+                            voiceRecordingViewModel.onEvent(VoiceRecordingEvent.SaveVoiceRecording)
+                        } else {
+                            voiceRecordingViewModel.startRecording(context)
+                        }
+                    },
+                    modifier = Modifier
+                        .align(Alignment.BottomEnd)
+                        .padding(16.dp)
+                ) {
+                    Icon(
+                        imageVector = if (state.isAddingVoiceRecording) Icons.Default.Close else Icons.Default.Add,
+                        contentDescription = "Add voice recording"
+                    )
+                }
+                LaunchedEffect(key1 = currentLocation) {
+                    if (currentLocation != null) {
+                        loading = false
+                        val latMin = currentLocation!!.latitude - 0.01
+                        val latMax = currentLocation!!.latitude + 0.01
+                        val lngMin = currentLocation!!.longitude - 0.01
+                        val lngMax = currentLocation!!.longitude + 0.01
+                        val recordings = withContext(Dispatchers.IO) {
+                            dao.getMessagesNearLocation(latMin, latMax, lngMin, lngMax)
+                        }
+                        nearbyRecordings = recordings
+                    }
+                }
+                if (nearbyRecordings.isNotEmpty()) {
+                    FloatingActionButton(
+                        onClick = {
+                            voiceRecordingViewModel.playAudio(nearbyRecordings.last().fileName)
+                        }, modifier = Modifier
+                            .align(Alignment.BottomEnd)
+                            .padding(16.dp)
+                            .offset(y = (-72).dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Call,
+                            contentDescription = "Hear voice recording"
+                        )
+                    }
+                }
             }
         }
     }
 }
-fun startLocationUpdates(locationClient: DefaultLocationClient, onLocationReceived: (Location) -> Unit) {
+
+private fun startLocationUpdates(
+    locationClient: DefaultLocationClient,
+    onLocationReceived: (Location) -> Unit
+) {
     val scope = CoroutineScope(Dispatchers.Main)
     scope.launch {
         locationClient.getLocationUpdates(2000L).collect { location ->
@@ -173,43 +250,22 @@ fun startLocationUpdates(locationClient: DefaultLocationClient, onLocationReceiv
         }
     }
 }
-private fun bitmapFromVector(context: Context, vectorResId:Int): BitmapDescriptor {
-    val vectorDrawable: Drawable = ContextCompat.getDrawable(context,vectorResId)!!
-    vectorDrawable.setBounds(0,0,vectorDrawable.intrinsicWidth,vectorDrawable.intrinsicHeight)
+
+private fun bitmapFromVector(context: Context, vectorResId: Int): BitmapDescriptor {
+    val vectorDrawable: Drawable = ContextCompat.getDrawable(context, vectorResId)!!
+    vectorDrawable.setBounds(0, 0, vectorDrawable.intrinsicWidth, vectorDrawable.intrinsicHeight)
 
     val bitmap: Bitmap =
-        Bitmap.createBitmap(vectorDrawable.intrinsicWidth,vectorDrawable.intrinsicHeight,Bitmap.Config.ARGB_8888)
+        Bitmap.createBitmap(
+            vectorDrawable.intrinsicWidth,
+            vectorDrawable.intrinsicHeight,
+            Bitmap.Config.ARGB_8888
+        )
 
     val canvas = Canvas(bitmap)
     vectorDrawable.draw(canvas)
 
     return BitmapDescriptorFactory.fromBitmap(bitmap)
 }
-suspend fun MarkerState.animateToPosition(endPosition: LatLng, duration: Long) {
-    val startPosition = position
 
-    suspendCoroutine { continuation ->
-        ValueAnimator.ofFloat(0f, 1f).apply {
-            this.duration = duration
-            interpolator = null
 
-            addUpdateListener { animation ->
-                position = LatLngInterpolator.Linear.interpolate(
-                    animation.animatedFraction,
-                    startPosition,
-                    endPosition
-                )
-            }
-
-            doOnEnd {
-                continuation.resume(Unit)
-            }
-
-            doOnCancel {
-                continuation.resume(Unit)
-            }
-
-            start()
-        }
-    }
-}

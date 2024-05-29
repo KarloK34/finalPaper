@@ -1,4 +1,4 @@
-package com.example.finalpaper.screens
+package com.example.finalpaper.locationUtilities
 
 import com.google.android.gms.maps.model.LatLng
 
