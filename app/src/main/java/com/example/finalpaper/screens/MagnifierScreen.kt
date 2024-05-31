@@ -26,6 +26,7 @@ import com.example.finalpaper.permissions.PermissionDialog
 import com.example.finalpaper.permissions.PermissionsViewModel
 import com.example.finalpaper.permissions.RecordAudioPermissionTextProvider
 import com.example.finalpaper.components.CameraPreview
+import com.example.finalpaper.permissions.HandleDialogs
 import com.example.finalpaper.permissions.openAppSettings
 
 
@@ -56,26 +57,13 @@ fun MagnifierScreen(
         }
     }
 
-    dialogQueue.reversed().forEach { permission ->
-        PermissionDialog(
-            permissionTextProvider = when (permission) {
-                Manifest.permission.CAMERA -> CameraPermissionTextProvider()
-                Manifest.permission.ACCESS_FINE_LOCATION -> AccessFineLocationPermissionTextProvider()
-                Manifest.permission.RECORD_AUDIO -> RecordAudioPermissionTextProvider()
-                else -> return@forEach
-            },
-            isPermanentlyDeclined = !ActivityCompat.shouldShowRequestPermissionRationale(
-                context as ComponentActivity,
-                permission
-            ),
-            onDismiss = viewModel::dismissDialog,
-            onOkClick = {
-                viewModel.dismissDialog()
-                cameraPermissionResultLauncher.launch(permission)
-            },
-            onGoToAppSettingsClick = { openAppSettings(context) }
-        )
-    }
+    HandleDialogs(
+        dialogQueue = dialogQueue,
+        viewModel = viewModel,
+        context = context,
+        permissionResultLauncher = cameraPermissionResultLauncher
+    )
+
     if (cameraPermissionGranted) {
         Box(modifier = Modifier.fillMaxSize()) {
             CameraPreview(controller = controller, Modifier.fillMaxSize())

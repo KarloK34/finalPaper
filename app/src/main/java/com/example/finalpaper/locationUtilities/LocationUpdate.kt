@@ -7,3 +7,15 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 data class LocationUpdate(val latLng: LatLng, val timeSinceLastUpdate: Long)
+
+fun startLocationUpdates(
+    locationClient: DefaultLocationClient,
+    onLocationReceived: (Location) -> Unit
+) {
+    val scope = CoroutineScope(Dispatchers.Main)
+    scope.launch {
+        locationClient.getLocationUpdates(2000L).collect { location ->
+            onLocationReceived(location)
+        }
+    }
+}

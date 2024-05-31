@@ -17,6 +17,8 @@ class PermissionsViewModel: ViewModel() {
     ) {
         if(!isGranted && !visiblePermissionDialogQueue.contains(permission)) {
             visiblePermissionDialogQueue.add(permission)
+        } else if (isGranted && visiblePermissionDialogQueue.contains(permission)) {
+            visiblePermissionDialogQueue.remove(permission)
         }
     }
 }
