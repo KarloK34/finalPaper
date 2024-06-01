@@ -2,6 +2,7 @@ package com.example.finalpaper.screens
 
 import android.Manifest
 import android.content.pm.PackageManager
+import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Box
@@ -12,10 +13,12 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Call
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material3.Button
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -31,8 +34,10 @@ import androidx.core.app.ActivityCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import com.example.finalpaper.MainActivity
+import com.example.finalpaper.POIRepository
 import com.example.finalpaper.locationUtilities.DefaultLocationClient
 import com.example.finalpaper.R
+import com.example.finalpaper.TextToSpeechController
 import com.example.finalpaper.voiceRecordingRoom.VoiceRecording
 import com.example.finalpaper.voiceRecordingRoom.VoiceRecordingEvent
 import com.example.finalpaper.voiceRecordingRoom.VoiceRecordingViewModel
@@ -56,19 +61,23 @@ fun MapScreen(navController: NavHostController) {
     val viewModel: PermissionsViewModel = viewModel()
     val dialogQueue = viewModel.visiblePermissionDialogQueue
     val context = LocalContext.current
+
     var currentLocation by remember { mutableStateOf<LatLng?>(null) }
     var isMapLoaded by remember { mutableStateOf(false) }
     var loading by remember { mutableStateOf(true) }
     var permissionsGranted by remember { mutableStateOf(false) }
-
+    val ttsController = remember { TextToSpeechController(context) }
+    DisposableEffect(Unit) {
+        onDispose {
+            ttsController.shutdown()
+        }
+    }
     val dao = remember { MainActivity.DatabaseProvider.getDatabase(context).voiceRecordingDao() }
     val voiceRecordingViewModel = remember { VoiceRecordingViewModel(dao, context) }
     val state by voiceRecordingViewModel.state.collectAsState()
     var nearbyRecordings by remember { mutableStateOf<List<VoiceRecording>>(emptyList()) }
-
     val fusedLocationClient = remember { LocationServices.getFusedLocationProviderClient(context) }
     val locationClient = remember { DefaultLocationClient(context, fusedLocationClient) }
-
     val permissionsToRequest = arrayOf(
         Manifest.permission.ACCESS_FINE_LOCATION,
         Manifest.permission.RECORD_AUDIO
@@ -86,7 +95,6 @@ fun MapScreen(navController: NavHostController) {
             permissionsGranted = perms.values.all { it }
         }
     )
-
     LaunchedEffect(Unit) {
         if (permissionsToRequest.any {
                 ActivityCompat.checkSelfPermission(context, it) != PackageManager.PERMISSION_GRANTED
@@ -149,10 +157,30 @@ fun MapScreen(navController: NavHostController) {
                     )
                 }
                 LaunchedEffect(Unit) {
-                    locationClient.getLocationUpdates(2000L).collect { location ->
+                    locationClient.getLocationUpdates(3000L).collect { location ->
                         val newLatLng = LatLng(location.latitude, location.longitude)
                         animationQueue.addToQueue(newLatLng)
                     }
+                }
+
+                val isButtonClicked = remember { mutableStateOf(false) }
+
+                LaunchedEffect(isButtonClicked.value) {
+                    if (isButtonClicked.value) {
+                        currentLocation.let { location ->
+                            val pois = POIRepository(context).getPOIs(location!!, 20)
+                            pois.forEach { poiLikelihood ->
+                                poiLikelihood.place.let {
+                                    ttsController.speak("You are near ${it.name}")
+                                    it.name?.let { it1 -> Log.d("TEST", it1) }
+                                }
+                            }
+                        }
+                        isButtonClicked.value = !isButtonClicked.value
+                    }
+                }
+                Button(onClick = { isButtonClicked.value = !isButtonClicked.value }) {
+                    Text("Fetch POIs")
                 }
                 if (ActivityCompat.checkSelfPermission(
                         context,
@@ -208,7 +236,9 @@ fun MapScreen(navController: NavHostController) {
                     if (nearbyRecordings.isNotEmpty()) {
                         FloatingActionButton(
                             onClick = {
-                                voiceRecordingViewModel.playAudio(nearbyRecordings.last().fileName)
+                                nearbyRecordings.forEach {
+                                    voiceRecordingViewModel.playAudio(it.fileName)
+                                }
                             }, modifier = Modifier
                                 .align(Alignment.BottomEnd)
                                 .padding(16.dp)
@@ -223,10 +253,9 @@ fun MapScreen(navController: NavHostController) {
                 }
             }
         }
+
     }
 }
-
-
 
 
 

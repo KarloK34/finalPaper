@@ -14,7 +14,7 @@ fun startLocationUpdates(
 ) {
     val scope = CoroutineScope(Dispatchers.Main)
     scope.launch {
-        locationClient.getLocationUpdates(2000L).collect { location ->
+        locationClient.getLocationUpdates(3000L).collect { location ->
             onLocationReceived(location)
         }
     }

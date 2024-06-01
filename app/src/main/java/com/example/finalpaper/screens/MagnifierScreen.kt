@@ -2,7 +2,6 @@ package com.example.finalpaper.screens
 
 import android.Manifest
 import android.content.pm.PackageManager
-import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.camera.view.LifecycleCameraController
@@ -20,14 +19,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.app.ActivityCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.finalpaper.permissions.AccessFineLocationPermissionTextProvider
-import com.example.finalpaper.permissions.CameraPermissionTextProvider
-import com.example.finalpaper.permissions.PermissionDialog
 import com.example.finalpaper.permissions.PermissionsViewModel
-import com.example.finalpaper.permissions.RecordAudioPermissionTextProvider
 import com.example.finalpaper.components.CameraPreview
 import com.example.finalpaper.permissions.HandleDialogs
-import com.example.finalpaper.permissions.openAppSettings
 
 
 @Composable
