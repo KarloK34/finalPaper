@@ -19,10 +19,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -45,7 +43,9 @@ import androidx.core.content.ContextCompat
 import com.example.finalpaper.R
 import com.example.finalpaper.cameraUtilities.convertImageProxyToBitmap
 import com.example.finalpaper.cameraUtilities.saveImageToGallery
+import com.example.finalpaper.filters.applySharpenFilter
 import com.example.finalpaper.filters.applySobelFilter
+import com.example.finalpaper.filters.applyUnsharpMaskFilter
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -61,11 +61,15 @@ fun CameraPreview(
     val context = LocalContext.current
     var capturedImageBitmap by remember { mutableStateOf<ImageBitmap?>(null) }
     var filteredImageBitmap by remember { mutableStateOf<ImageBitmap?>(null) }
+    var sobelImageBitmap by remember { mutableStateOf<ImageBitmap?>(null) }
+    var unsharpMaskImageBitmap by remember { mutableStateOf<ImageBitmap?>(null) }
+    var sharpenImageBitmap by remember { mutableStateOf<ImageBitmap?>(null) }
     val cameraExecutor = ContextCompat.getMainExecutor(context)
     var isFrozen by remember { mutableStateOf(false) }
-    var isFilterApplied by remember {
-        mutableStateOf(false)
-    }
+    var isFilterApplied by remember { mutableStateOf(false) }
+    var isSobelApplied by remember { mutableStateOf(false) }
+    var isSharpenApplied by remember { mutableStateOf(false) }
+    var isUnsharpMaskApplied by remember { mutableStateOf(false) }
 
     Box {
         if (capturedImageBitmap != null && isFrozen) {
@@ -81,37 +85,144 @@ fun CameraPreview(
                     contentScale = ContentScale.Crop
                 )
             }
-            Button(
-                onClick = {
-                    if (isFilterApplied) {
-                        saveImageToGallery(filteredImageBitmap!!.asAndroidBitmap(), context)
-                        Toast.makeText(
-                            context,
-                            "Filtered photo saved to gallery",
-                            Toast.LENGTH_SHORT
-                        ).show()
-                    } else {
-                        saveImageToGallery(capturedImageBitmap!!.asAndroidBitmap(), context)
-                        Toast.makeText(context, "Photo saved to gallery", Toast.LENGTH_SHORT).show()
-                    }
-                },
+            Column(
                 modifier = Modifier
                     .align(Alignment.BottomStart)
-                    .padding(16.dp)
+                    .padding(30.dp)
             ) {
-                Text("Save to Gallery")
-            }
-            if (filteredImageBitmap != null) {
-                Button(
-                    onClick = { isFilterApplied = !isFilterApplied },
-                    modifier = Modifier
-                        .align(Alignment.BottomEnd)
-                        .padding(16.dp)
-                ) {
-                    if (isFilterApplied) {
-                        Text(text = "Undo filter")
-                    } else {
-                        Text(text = "Apply filter")
+                Row {
+                    IconButton(
+                        onClick = {
+                            if (isFilterApplied) {
+                                saveImageToGallery(filteredImageBitmap!!.asAndroidBitmap(), context)
+                                Toast.makeText(
+                                    context,
+                                    "Filtered photo saved to gallery",
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                            } else {
+                                saveImageToGallery(capturedImageBitmap!!.asAndroidBitmap(), context)
+                                Toast.makeText(
+                                    context,
+                                    "Photo saved to gallery",
+                                    Toast.LENGTH_SHORT
+                                )
+                                    .show()
+                            }
+                        },
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(16.dp))
+                            .height(55.dp)
+                            .width(55.dp)
+                            .background(
+                                color = Color.LightGray
+                            )
+                    ) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.ic_gallery),
+                            contentDescription = "Save to Gallery"
+                        )
+                    }
+                    Spacer(modifier = Modifier.width(10.dp))
+                    IconButton(
+                        onClick = {
+                            filteredImageBitmap = null
+                            capturedImageBitmap = null
+                            sobelImageBitmap = null
+                            sharpenImageBitmap = null
+                            unsharpMaskImageBitmap = null
+                            isFrozen = false
+                            isFilterApplied = false
+                        }, modifier = Modifier
+                            .clip(RoundedCornerShape(16.dp))
+                            .height(55.dp)
+                            .width(55.dp)
+                            .background(
+                                color = Color.LightGray
+                            )
+                    ) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.baseline_photo_camera_24),
+                            contentDescription = "Reset magnifier"
+                        )
+                    }
+                    if (sobelImageBitmap != null) {
+                        IconButton(
+                            onClick = {
+                                isFilterApplied =
+                                    if(isSharpenApplied || isUnsharpMaskApplied) true
+                                    else !isFilterApplied
+                                isSobelApplied = !isSobelApplied
+                                isUnsharpMaskApplied = false
+                                isSharpenApplied = false
+                                filteredImageBitmap = sobelImageBitmap
+                            },
+                            modifier = Modifier
+                                .padding(start = 10.dp)
+                                .clip(RoundedCornerShape(16.dp))
+                                .height(55.dp)
+                                .width(55.dp)
+                                .background(
+                                    if (isSobelApplied) Color.Yellow else Color.LightGray
+                                )
+                        ) {
+                            Icon(
+                                painter = painterResource(id = R.drawable.baseline_filter_1_24),
+                                contentDescription = "Apply or Undo Sobel Filter"
+                            )
+                        }
+                    }
+                    if (sharpenImageBitmap != null) {
+                        IconButton(
+                            onClick = {
+                                isFilterApplied =
+                                    if(isSobelApplied || isUnsharpMaskApplied) true
+                                    else !isFilterApplied
+                                isSharpenApplied = !isSharpenApplied
+                                isSobelApplied = false
+                                isUnsharpMaskApplied = false
+                                filteredImageBitmap = sharpenImageBitmap
+                            },
+                            modifier = Modifier
+                                .padding(start = 10.dp)
+                                .clip(RoundedCornerShape(16.dp))
+                                .height(55.dp)
+                                .width(55.dp)
+                                .background(
+                                    if (isSharpenApplied) Color.Yellow else Color.LightGray
+                                )
+                        ) {
+                            Icon(
+                                painter = painterResource(id = R.drawable.baseline_filter_2_24),
+                                contentDescription = "Apply or Undo Sharpen Filter"
+                            )
+                        }
+                    }
+                    if (unsharpMaskImageBitmap != null) {
+                        IconButton(
+                            onClick = {
+                                isFilterApplied =
+                                    if(isSobelApplied || isSharpenApplied) true
+                                    else !isFilterApplied
+                                isUnsharpMaskApplied = !isUnsharpMaskApplied
+                                isSobelApplied = false
+                                isSharpenApplied = false
+                                filteredImageBitmap = unsharpMaskImageBitmap
+                            },
+                            modifier = Modifier
+                                .padding(start = 10.dp)
+                                .clip(RoundedCornerShape(16.dp))
+                                .height(55.dp)
+                                .width(55.dp)
+                                .background(
+                                    if (isUnsharpMaskApplied) Color.Yellow else Color.LightGray
+                                )
+                        ) {
+                            Icon(
+                                painter = painterResource(id = R.drawable.baseline_filter_3_24),
+                                contentDescription = "Apply or Undo Unsharp Mask Filter"
+                            )
+                        }
                     }
                 }
             }
@@ -153,9 +264,14 @@ fun CameraPreview(
 
                                         if (imageBitmap != null) {
                                             scope.launch(Dispatchers.Default) {
-                                                val filteredImage = applySobelFilter(imageBitmap)
+                                                val sobelImage = applySobelFilter(imageBitmap)
+                                                val sharpenImage = applySharpenFilter(imageBitmap)
+                                                val unsharpMaskImage =
+                                                    applyUnsharpMaskFilter(imageBitmap)
                                                 withContext(Dispatchers.Main) {
-                                                    filteredImageBitmap = filteredImage
+                                                    sobelImageBitmap = sobelImage
+                                                    sharpenImageBitmap = sharpenImage
+                                                    unsharpMaskImageBitmap = unsharpMaskImage
                                                 }
                                             }
                                         }

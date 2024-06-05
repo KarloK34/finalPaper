@@ -27,29 +27,60 @@ fun applySharpenFilter(originalImage: ImageBitmap): ImageBitmap {
 }
 
 suspend fun applyConvolutionParallel(inputBitmap: Bitmap, kernel: Array<DoubleArray>): Bitmap {
-    var resultBitmap: Bitmap
-    coroutineScope {
-        val width = inputBitmap.width
-        val height = inputBitmap.height
-        resultBitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+    val width = inputBitmap.width
+    val height = inputBitmap.height
+    val resultBitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
 
-        val jobs = (1 until width - 1).map { x ->
+    val inputPixels = IntArray(width * height)
+    inputBitmap.getPixels(inputPixels, 0, width, 0, 0, width, height)
+    val resultPixels = IntArray(width * height)
+
+    coroutineScope {
+        val chunkSize = height / 4
+        val jobs = (0 until height step chunkSize).map { startY ->
             async(Dispatchers.Default) {
-                IntArray(height - 2) { y ->
-                    val red = applyConvolutionToChannel(inputBitmap, x, y + 1, kernel, 'r')
-                    val green = applyConvolutionToChannel(inputBitmap, x, y + 1, kernel, 'g')
-                    val blue = applyConvolutionToChannel(inputBitmap, x, y + 1, kernel, 'b')
-                    Color.rgb(red, green, blue)
+                for (y in startY until (startY + chunkSize).coerceAtMost(height)) {
+                    for (x in 0 until width) {
+                        if (x > 0 && x < width - 1 && y > 0 && y < height - 1) {
+                            val red = applyConvolutionToChannel(inputPixels, width, x, y, kernel, 'r')
+                            val green = applyConvolutionToChannel(inputPixels, width, x, y, kernel, 'g')
+                            val blue = applyConvolutionToChannel(inputPixels, width, x, y, kernel, 'b')
+                            resultPixels[y * width + x] = Color.rgb(red, green, blue)
+                        } else {
+                            resultPixels[y * width + x] = inputPixels[y * width + x]
+                        }
+                    }
                 }
             }
         }
+        jobs.awaitAll()
+    }
 
-        val rows = jobs.awaitAll()
-        for (x in 1 until width - 1) {
-            for (y in 1 until height - 1) {
-                resultBitmap.setPixel(x, y, rows[x - 1][y - 1])
+    resultBitmap.setPixels(resultPixels, 0, width, 0, 0, width, height)
+    return resultBitmap
+}
+fun applyConvolutionToChannel(
+    pixels: IntArray,
+    width: Int,
+    x: Int,
+    y: Int,
+    kernel: Array<DoubleArray>,
+    channel: Char
+): Int {
+    var sum = 0.0
+
+    for (i in -1..1) {
+        for (j in -1..1) {
+            val pixelIndex = (y + j) * width + (x + i)
+            val pixelValue = when (channel) {
+                'r' -> Color.red(pixels[pixelIndex])
+                'g' -> Color.green(pixels[pixelIndex])
+                'b' -> Color.blue(pixels[pixelIndex])
+                else -> throw IllegalArgumentException("Invalid channel")
             }
+            sum += pixelValue * kernel[i + 1][j + 1]
         }
     }
-    return resultBitmap
+
+    return sum.coerceIn(0.0, 255.0).toInt()
 }
