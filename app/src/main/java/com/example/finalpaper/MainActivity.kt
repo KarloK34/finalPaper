@@ -11,6 +11,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.room.Room
+import com.example.finalpaper.locationUtilities.PlacesClientProvider
 import com.example.finalpaper.screens.HomeScreen
 import com.example.finalpaper.screens.MagnifierScreen
 import com.example.finalpaper.screens.MapScreen
