@@ -4,6 +4,7 @@ import android.content.Context
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.camera.core.ImageCapture
 import androidx.camera.view.CameraController
 import androidx.camera.view.LifecycleCameraController
 import androidx.compose.runtime.remember
@@ -25,7 +26,6 @@ class MainActivity : ComponentActivity() {
         private var db: AppDatabase? = null
 
         fun getDatabase(context: Context): AppDatabase {
-            context.deleteDatabase("app_database")
             if (db == null) {
                 db = Room.databaseBuilder(
                     context.applicationContext,
@@ -44,9 +44,9 @@ class MainActivity : ComponentActivity() {
                 val controller = remember {
                     LifecycleCameraController(applicationContext).apply {
                         setEnabledUseCases(
-                            CameraController.IMAGE_CAPTURE or
-                                    CameraController.VIDEO_CAPTURE
+                            CameraController.IMAGE_CAPTURE
                         )
+                        imageCaptureMode = ImageCapture.CAPTURE_MODE_MAXIMIZE_QUALITY
                     }
                 }
                 val navController = rememberNavController()

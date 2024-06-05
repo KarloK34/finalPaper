@@ -91,12 +91,10 @@ dependencies {
 
     implementation (libs.androidx.navigation.compose)
 
-    val room_version = "2.6.1"
+    implementation(libs.androidx.room.runtime)
+    implementation(libs.androidx.room.ktx)
 
-    implementation("androidx.room:room-runtime:$room_version")
-    implementation("androidx.room:room-ktx:$room_version")
-
-    ksp("androidx.room:room-compiler:$room_version")
+    ksp(libs.androidx.room.compiler)
     implementation (libs.retrofit)
     implementation (libs.converter.gson)
 }

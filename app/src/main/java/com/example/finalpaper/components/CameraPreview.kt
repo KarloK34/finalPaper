@@ -1,9 +1,7 @@
 package com.example.finalpaper.components
 
-import android.graphics.Bitmap
-import android.graphics.BitmapFactory
-import android.graphics.Matrix
 import android.util.Log
+import android.widget.Toast
 import androidx.camera.core.ImageCapture
 import androidx.camera.core.ImageCaptureException
 import androidx.camera.core.ImageProxy
@@ -36,24 +34,22 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
-import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.asAndroidBitmap
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.core.content.ContextCompat
 import com.example.finalpaper.R
-import com.example.finalpaper.filters.applySharpenFilter
-import com.example.finalpaper.filters.applySobelBlueChannelFilter
+import com.example.finalpaper.cameraUtilities.convertImageProxyToBitmap
+import com.example.finalpaper.cameraUtilities.saveImageToGallery
 import com.example.finalpaper.filters.applySobelFilter
-import com.example.finalpaper.filters.applyUnsharpMaskFilter
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import java.util.concurrent.Executors
+
 
 @Composable
 fun CameraPreview(
@@ -61,40 +57,62 @@ fun CameraPreview(
     modifier: Modifier = Modifier
 ) {
     val lifecycleOwner = LocalLifecycleOwner.current
+    val scope = rememberCoroutineScope()
+    val context = LocalContext.current
     var capturedImageBitmap by remember { mutableStateOf<ImageBitmap?>(null) }
     var filteredImageBitmap by remember { mutableStateOf<ImageBitmap?>(null) }
-    val cameraExecutor = Executors.newSingleThreadExecutor()
+    val cameraExecutor = ContextCompat.getMainExecutor(context)
     var isFrozen by remember { mutableStateOf(false) }
+    var isFilterApplied by remember {
+        mutableStateOf(false)
+    }
 
     Box {
         if (capturedImageBitmap != null && isFrozen) {
-            Image(
-                bitmap = capturedImageBitmap!!,
-                contentDescription = null,
-                modifier = Modifier.fillMaxSize(),
-                contentScale = ContentScale.Crop
-            )
-            IconButton(
-                onClick = {
-                    isFrozen = false
-                    filteredImageBitmap = null
-                }, modifier = Modifier
-                    .clip(RoundedCornerShape(16.dp))
-                    .background(
-                        color = Color.LightGray
-                    )
-            ) {
-                Icon(
-                    painter = painterResource(R.drawable.ic_back_arrow),
-                    contentDescription = "Go Back"
+            (if (isFilterApplied) {
+                filteredImageBitmap
+            } else {
+                capturedImageBitmap
+            })?.let {
+                Image(
+                    bitmap = it,
+                    contentDescription = null,
+                    modifier = Modifier.fillMaxSize(),
+                    contentScale = ContentScale.Crop
                 )
+            }
+            Button(
+                onClick = {
+                    if (isFilterApplied) {
+                        saveImageToGallery(filteredImageBitmap!!.asAndroidBitmap(), context)
+                        Toast.makeText(
+                            context,
+                            "Filtered photo saved to gallery",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    } else {
+                        saveImageToGallery(capturedImageBitmap!!.asAndroidBitmap(), context)
+                        Toast.makeText(context, "Photo saved to gallery", Toast.LENGTH_SHORT).show()
+                    }
+                },
+                modifier = Modifier
+                    .align(Alignment.BottomStart)
+                    .padding(16.dp)
+            ) {
+                Text("Save to Gallery")
             }
             if (filteredImageBitmap != null) {
                 Button(
-                    onClick = { capturedImageBitmap = filteredImageBitmap },
-                    modifier = Modifier.align(Alignment.BottomEnd)
+                    onClick = { isFilterApplied = !isFilterApplied },
+                    modifier = Modifier
+                        .align(Alignment.BottomEnd)
+                        .padding(16.dp)
                 ) {
-                    Text(text = "Apply filter")
+                    if (isFilterApplied) {
+                        Text(text = "Undo filter")
+                    } else {
+                        Text(text = "Apply filter")
+                    }
                 }
             }
         } else {
@@ -117,10 +135,9 @@ fun CameraPreview(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(30.dp)
                 ) {
                     Torch(controller)
-                    Spacer(modifier = Modifier.width(5.dp))
+                    Spacer(modifier = Modifier.width(10.dp))
                     IconButton(
                         onClick = {
                             controller.takePicture(
@@ -135,8 +152,8 @@ fun CameraPreview(
                                         image.close()
 
                                         if (imageBitmap != null) {
-                                            GlobalScope.launch(Dispatchers.Default) {
-                                                val filteredImage = applySharpenFilter(imageBitmap)
+                                            scope.launch(Dispatchers.Default) {
+                                                val filteredImage = applySobelFilter(imageBitmap)
                                                 withContext(Dispatchers.Main) {
                                                     filteredImageBitmap = filteredImage
                                                 }
@@ -154,6 +171,8 @@ fun CameraPreview(
                                 })
                         }, modifier = Modifier
                             .clip(RoundedCornerShape(16.dp))
+                            .height(60.dp)
+                            .width(60.dp)
                             .background(
                                 color = Color.LightGray
                             )
@@ -166,33 +185,5 @@ fun CameraPreview(
                 }
             }
         }
-
     }
-}
-
-fun convertImageProxyToBitmap(imageProxy: ImageProxy): ImageBitmap? {
-    val planeProxy = imageProxy.planes[0]
-    val buffer = planeProxy.buffer
-    val bytes = ByteArray(buffer.remaining())
-    buffer.get(bytes)
-
-    val bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
-
-    val rotationDegrees = when (imageProxy.imageInfo.rotationDegrees) {
-        0 -> 0f
-        90 -> 90f
-        180 -> 180f
-        270 -> 270f
-        else -> 0f
-    }
-
-    val rotatedBitmap = rotateBitmap(bitmap, rotationDegrees)
-
-    return rotatedBitmap?.asImageBitmap()
-}
-
-private fun rotateBitmap(bitmap: Bitmap?, degrees: Float): Bitmap? {
-    bitmap ?: return null
-    val matrix = Matrix().apply { postRotate(degrees) }
-    return Bitmap.createBitmap(bitmap, 0, 0, bitmap.width, bitmap.height, matrix, true)
 }

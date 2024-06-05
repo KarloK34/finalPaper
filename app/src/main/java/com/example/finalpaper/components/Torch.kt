@@ -2,6 +2,8 @@ package com.example.finalpaper.components
 
 import androidx.camera.view.LifecycleCameraController
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -29,6 +31,8 @@ fun Torch(controller: LifecycleCameraController) {
         },
         modifier = Modifier
             .clip(RoundedCornerShape(16.dp))
+            .height(60.dp)
+            .width(60.dp)
             .background(
                 color = if (isFlashlightOn) Color.Yellow else Color.LightGray
             )
