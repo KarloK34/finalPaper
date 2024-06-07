@@ -1,12 +1,20 @@
 package com.example.finalpaper.screens
 
 import android.Manifest
+import android.content.Context
+import android.content.Intent
 import android.content.pm.PackageManager
+import android.net.Uri
+import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.LocationOn
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -39,6 +47,9 @@ import com.google.maps.android.compose.GoogleMap
 import com.google.maps.android.compose.Marker
 import com.google.maps.android.compose.MarkerState
 import com.google.maps.android.compose.rememberCameraPositionState
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 @Composable
 fun MapScreen(navController: NavHostController) {
@@ -54,6 +65,7 @@ fun MapScreen(navController: NavHostController) {
     val dao = remember { MainActivity.DatabaseProvider.getDatabase(context).voiceRecordingDao() }
     val voiceRecordingViewModel = remember { VoiceRecordingViewModel(dao, context) }
     val state by voiceRecordingViewModel.state.collectAsState()
+    val voiceRecordings = state.voiceRecordings
 
     val fusedLocationClient = remember { LocationServices.getFusedLocationProviderClient(context) }
     val locationClient = remember { DefaultLocationClient(context, fusedLocationClient) }
@@ -121,19 +133,34 @@ fun MapScreen(navController: NavHostController) {
                 val coroutineScope = rememberCoroutineScope()
                 val markerState = remember { MarkerState(position = currentLocation!!) }
                 val animationQueue = remember { AnimationQueue(markerState, coroutineScope) }
+                val cameraPositionState = rememberCameraPositionState {
+                    position = CameraPosition.fromLatLngZoom(currentLocation!!, 16f)
+                }
 
                 GoogleMap(
                     modifier = Modifier.fillMaxSize(),
                     onMapLoaded = { isMapLoaded = true },
-                    cameraPositionState = rememberCameraPositionState {
-                        position = CameraPosition.fromLatLngZoom(currentLocation!!, 16f)
-                    }
+                    cameraPositionState = cameraPositionState
                 ) {
                     Marker(
                         state = markerState,
                         title = "Current Location",
                         icon = bitmapFromVector(context, R.drawable.baseline_circle_24)
                     )
+                    voiceRecordings.forEach { recording ->
+                        val recordingMarkerState = MarkerState(position = LatLng(recording.latitude, recording.longitude))
+                        Marker(
+                            state = recordingMarkerState,
+                            title = "Click to hear Voice Recording",
+                            snippet = "Recorded at ${getFormattedTime(recording.timestamp)}",
+                            onInfoWindowClick = {
+                                voiceRecordingViewModel.playAudio(recording.fileName)
+                            }
+                        )
+                    }
+                }
+                FloatingActionButton(onClick = { cameraPositionState.position = CameraPosition.fromLatLngZoom(currentLocation!!, 16f) }) {
+                    Icon(Icons.Default.LocationOn, contentDescription = "Current Location")
                 }
                 LaunchedEffect(Unit) {
                     locationClient.getLocationUpdates(3000L).collect { location ->
@@ -155,6 +182,21 @@ fun MapScreen(navController: NavHostController) {
     }
 }
 
+fun getFormattedTime(timeInMillis: Long): String {
+    val date = Date(timeInMillis)
+    val format = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
+    return format.format(date)
+}
 
+fun startNavigationToLocation(context: Context, destination: LatLng) {
+    val uri = "google.navigation:q=${destination.latitude},${destination.longitude}"
+    val intent = Intent(Intent.ACTION_VIEW, Uri.parse(uri))
+    intent.setPackage("com.google.android.apps.maps")
+    if (intent.resolveActivity(context.packageManager) != null) {
+        context.startActivity(intent)
+    } else {
+        Toast.makeText(context, "Google Maps app not installed", Toast.LENGTH_SHORT).show()
+    }
+}
 
 

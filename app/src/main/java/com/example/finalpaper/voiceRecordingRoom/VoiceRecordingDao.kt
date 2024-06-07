@@ -16,4 +16,6 @@ interface VoiceRecordingDao {
     @Query("SELECT * FROM voicerecording WHERE latitude BETWEEN :latMin AND :latMax AND longitude BETWEEN :lngMin AND :lngMax")
     suspend fun getMessagesNearLocation(latMin: Double, latMax: Double, lngMin: Double, lngMax: Double): List<VoiceRecording>
 
+    @Query("SELECT * FROM voicerecording")
+    suspend fun getVoiceRecordings() : List<VoiceRecording>
 }

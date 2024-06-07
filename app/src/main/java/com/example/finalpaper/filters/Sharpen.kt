@@ -11,7 +11,7 @@ import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.runBlocking
 
-fun applySharpenFilter(originalImage: ImageBitmap): ImageBitmap {
+suspend fun applySharpenFilter(originalImage: ImageBitmap): ImageBitmap {
     Log.d("Test", "Pocetak")
     val kernel = arrayOf(
         doubleArrayOf(0.0, -1.0, 0.0),
@@ -23,7 +23,7 @@ fun applySharpenFilter(originalImage: ImageBitmap): ImageBitmap {
     val targetWidth = originalWidth / 2
     val targetHeight = originalHeight / 2
     val inputBitmap = downsampleImage(originalImage, targetWidth, targetHeight)
-    return runBlocking { applyConvolutionParallel(inputBitmap, kernel).asImageBitmap() }
+    return applyConvolutionParallel(inputBitmap, kernel).asImageBitmap()
 }
 
 suspend fun applyConvolutionParallel(inputBitmap: Bitmap, kernel: Array<DoubleArray>): Bitmap {

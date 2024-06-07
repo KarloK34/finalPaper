@@ -45,7 +45,7 @@ fun MapButtonsRow(
     currentLocation: LatLng? = null,
     context: Context,
     dao: VoiceRecordingDao
-    ) {
+) {
     val ttsController = remember { TextToSpeechController(context) }
     DisposableEffect(Unit) {
         onDispose {
@@ -60,10 +60,10 @@ fun MapButtonsRow(
     val builder: AlertDialog.Builder = AlertDialog.Builder(context)
     builder
         .setTitle("SELECT POINT OF INTEREST CATEGORY TO ANNOUNCE")
-        .setSingleChoiceItems(categories, 0) { _ , which ->
+        .setSingleChoiceItems(categories, 0) { _, which ->
             selectedCategory = categories[which]
         }
-        .setPositiveButton("Announce") { _ , _ ->
+        .setPositiveButton("Announce") { _, _ ->
             fetchAndAnnouncePOIs(selectedCategory, currentLocation, context, ttsController)
         }
 
@@ -87,8 +87,14 @@ fun MapButtonsRow(
     }
 
     Row {
-        FloatingActionButton(onClick = { dialog.show() }, modifier = Modifier.padding(start = 16.dp)) {
-            Icon(imageVector = Icons.Default.Menu, contentDescription = "Point of interest categories")
+        FloatingActionButton(onClick = {
+            selectedCategory = categories[0]
+            dialog.show()
+        }, modifier = Modifier.padding(start = 16.dp)) {
+            Icon(
+                imageVector = Icons.Default.Menu,
+                contentDescription = "Point of interest categories"
+            )
         }
         FloatingActionButton(
             onClick = { isSurroundingButtonClicked.value = !isSurroundingButtonClicked.value },
@@ -136,10 +142,10 @@ fun MapButtonsRow(
             }
             LaunchedEffect(key1 = currentLocation) {
                 if (currentLocation != null) {
-                    val latMin = currentLocation.latitude - 0.01
-                    val latMax = currentLocation.latitude + 0.01
-                    val lngMin = currentLocation.longitude - 0.01
-                    val lngMax = currentLocation.longitude + 0.01
+                    val latMin = currentLocation.latitude - 0.001
+                    val latMax = currentLocation.latitude + 0.001
+                    val lngMin = currentLocation.longitude - 0.001
+                    val lngMax = currentLocation.longitude + 0.001
                     val recordings = withContext(Dispatchers.IO) {
                         dao.getMessagesNearLocation(latMin, latMax, lngMin, lngMax)
                     }
@@ -165,7 +171,13 @@ fun MapButtonsRow(
 
     }
 }
-private fun fetchAndAnnouncePOIs(category: String, currentLocation: LatLng?, context: Context, ttsController: TextToSpeechController) {
+
+private fun fetchAndAnnouncePOIs(
+    category: String,
+    currentLocation: LatLng?,
+    context: Context,
+    ttsController: TextToSpeechController
+) {
     if (currentLocation != null) {
         CoroutineScope(Dispatchers.Main).launch {
             val pois = POIRepository(context).getPOIsOfCategory(currentLocation, 200, category)

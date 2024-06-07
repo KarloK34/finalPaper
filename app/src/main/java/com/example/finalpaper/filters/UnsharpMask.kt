@@ -16,7 +16,7 @@ import kotlin.math.exp
 import kotlin.math.roundToInt
 import kotlin.math.sqrt
 
-fun applyUnsharpMaskFilter(image: ImageBitmap): ImageBitmap {
+suspend fun applyUnsharpMaskFilter(image: ImageBitmap): ImageBitmap {
     Log.d("Test", "Pocetak")
     val originalWidth = image.width
     val originalHeight = image.height
@@ -27,7 +27,7 @@ fun applyUnsharpMaskFilter(image: ImageBitmap): ImageBitmap {
     val strength = 1.0
 
     val gaussianKernel = createGaussianKernel(kernelSize)
-    return runBlocking { applyUnsharpMask(inputBitmap, gaussianKernel, strength).asImageBitmap() }
+    return applyUnsharpMask(inputBitmap, gaussianKernel, strength).asImageBitmap()
 }
 suspend fun applyUnsharpMask(inputBitmap: Bitmap, kernel: Array<DoubleArray>, strength: Double): Bitmap {
     val blurredBitmap = applyConvolutionParallel(inputBitmap, kernel)

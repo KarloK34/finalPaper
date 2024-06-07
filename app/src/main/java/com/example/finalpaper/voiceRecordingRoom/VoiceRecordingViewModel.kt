@@ -5,10 +5,12 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.finalpaper.audioUtilities.AndroidAudioPlayer
 import com.example.finalpaper.audioUtilities.AndroidAudioRecorder
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.io.File
 
 class VoiceRecordingViewModel(
@@ -30,7 +32,14 @@ class VoiceRecordingViewModel(
     private var audioFile: File? = null
 
     private var audioFileName: String = ""
-
+    init {
+        viewModelScope.launch {
+            val recordings = withContext(Dispatchers.IO) {
+                dao.getVoiceRecordings()
+            }
+            _state.value = VoiceRecordingState(voiceRecordings = recordings)
+        }
+    }
     fun startRecording(context: Context) {
         audioFileName = "voice_recording_${System.currentTimeMillis()}.3gp"
         File(context.filesDir,audioFileName).also {
@@ -77,6 +86,10 @@ class VoiceRecordingViewModel(
                 )
                 viewModelScope.launch {
                     dao.insert(voiceRecording)
+                    val recordings = withContext(Dispatchers.IO) {
+                        dao.getVoiceRecordings()
+                    }
+                    _state.value = VoiceRecordingState(voiceRecordings = recordings)
                 }
                 _state.update { it.copy(
                     isAddingVoiceRecording = false,
