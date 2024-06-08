@@ -41,6 +41,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import com.example.finalpaper.R
+import com.example.finalpaper.audioUtilities.TextToSpeechController
 import com.example.finalpaper.cameraUtilities.convertImageProxyToBitmap
 import com.example.finalpaper.cameraUtilities.saveImageToGallery
 import com.example.finalpaper.filters.applySharpenFilter
@@ -54,7 +55,8 @@ import kotlinx.coroutines.withContext
 @Composable
 fun CameraPreview(
     controller: LifecycleCameraController,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    ttsController: TextToSpeechController
 ) {
     val lifecycleOwner = LocalLifecycleOwner.current
     val scope = rememberCoroutineScope()
@@ -100,6 +102,7 @@ fun CameraPreview(
                                     "Filtered photo saved to gallery",
                                     Toast.LENGTH_SHORT
                                 ).show()
+                                ttsController.speak("Filtered photo saved to gallery")
                             } else {
                                 saveImageToGallery(capturedImageBitmap!!.asAndroidBitmap(), context)
                                 Toast.makeText(
@@ -108,6 +111,7 @@ fun CameraPreview(
                                     Toast.LENGTH_SHORT
                                 )
                                     .show()
+                                ttsController.speak("Photo saved to gallery")
                             }
                         },
                         modifier = Modifier
@@ -126,6 +130,7 @@ fun CameraPreview(
                     Spacer(modifier = Modifier.width(10.dp))
                     IconButton(
                         onClick = {
+                            ttsController.speak("Reset")
                             filteredImageBitmap = null
                             capturedImageBitmap = null
                             sobelImageBitmap = null
@@ -133,6 +138,9 @@ fun CameraPreview(
                             unsharpMaskImageBitmap = null
                             isFrozen = false
                             isFilterApplied = false
+                            isSobelApplied = false
+                            isSharpenApplied = false
+                            isUnsharpMaskApplied = false
                         }, modifier = Modifier
                             .clip(RoundedCornerShape(16.dp))
                             .height(55.dp)
@@ -149,6 +157,8 @@ fun CameraPreview(
                     if (sobelImageBitmap != null) {
                         IconButton(
                             onClick = {
+                                if (isSobelApplied) ttsController.speak("Remove Sobel filter")
+                                else ttsController.speak("Apply Sobel filter")
                                 isFilterApplied =
                                     if(isSharpenApplied || isUnsharpMaskApplied) true
                                     else !isFilterApplied
@@ -175,6 +185,8 @@ fun CameraPreview(
                     if (sharpenImageBitmap != null) {
                         IconButton(
                             onClick = {
+                                if (isSharpenApplied) ttsController.speak("Remove Sharpen filter")
+                                else ttsController.speak("Apply Sharpen filter")
                                 isFilterApplied =
                                     if(isSobelApplied || isUnsharpMaskApplied) true
                                     else !isFilterApplied
@@ -201,6 +213,8 @@ fun CameraPreview(
                     if (unsharpMaskImageBitmap != null) {
                         IconButton(
                             onClick = {
+                                if (isUnsharpMaskApplied) ttsController.speak("Remove Unsharp mask filter")
+                                else ttsController.speak("Apply Unsharp mask filter")
                                 isFilterApplied =
                                     if(isSobelApplied || isSharpenApplied) true
                                     else !isFilterApplied
@@ -247,10 +261,11 @@ fun CameraPreview(
                     modifier = Modifier
                         .fillMaxWidth()
                 ) {
-                    Torch(controller)
+                    Torch(controller, ttsController)
                     Spacer(modifier = Modifier.width(10.dp))
                     IconButton(
                         onClick = {
+                            ttsController.speak("Freeze")
                             controller.takePicture(
                                 cameraExecutor,
                                 object : ImageCapture.OnImageCapturedCallback() {

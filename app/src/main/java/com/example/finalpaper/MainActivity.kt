@@ -7,11 +7,13 @@ import androidx.activity.compose.setContent
 import androidx.camera.core.ImageCapture
 import androidx.camera.view.CameraController
 import androidx.camera.view.LifecycleCameraController
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.remember
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.room.Room
+import com.example.finalpaper.audioUtilities.TextToSpeechController
 import com.example.finalpaper.locationUtilities.PlacesClientProvider
 import com.example.finalpaper.screens.HomeScreen
 import com.example.finalpaper.screens.MagnifierScreen
@@ -26,6 +28,7 @@ class MainActivity : ComponentActivity() {
         private var db: AppDatabase? = null
 
         fun getDatabase(context: Context): AppDatabase {
+            context.deleteDatabase("app_database")
             if (db == null) {
                 db = Room.databaseBuilder(
                     context.applicationContext,
@@ -50,21 +53,28 @@ class MainActivity : ComponentActivity() {
                     }
                 }
                 val navController = rememberNavController()
+                val ttsController = remember { TextToSpeechController(applicationContext) }
+
+                DisposableEffect(Unit) {
+                    onDispose {
+                        ttsController.shutdown()
+                    }
+                }
 
                 NavHost(
                     navController = navController,
                     startDestination = Screen.Home.route
                 ) {
                     composable(Screen.Home.route) {
-                        HomeScreen(navController)
+                        HomeScreen(navController, ttsController)
                     }
 
                     composable(Screen.Magnifier.route) {
-                        MagnifierScreen(controller)
+                        MagnifierScreen(controller, ttsController)
                     }
 
                     composable(Screen.Navigation.route) {
-                        MapScreen(navController)
+                        MapScreen(ttsController)
                     }
                 }
             }

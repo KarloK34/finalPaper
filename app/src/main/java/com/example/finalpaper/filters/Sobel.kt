@@ -10,11 +10,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.runBlocking
 import kotlin.math.sqrt
 
 suspend fun applySobelFilter(image: ImageBitmap): ImageBitmap {
-    Log.d("Test", "Pocetak")
     val inputBitmap = image.asAndroidBitmap()
     val width = inputBitmap.width
     val height = inputBitmap.height
@@ -85,7 +83,6 @@ suspend fun applySobelFilterParallel(inputPixels: IntArray, width: Int, height: 
 
     val outputBitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
     outputBitmap.setPixels(outputPixels, 0, width, 0, 0, width, height)
-    Log.d("Test", "Kraj")
     return outputBitmap
 }
 

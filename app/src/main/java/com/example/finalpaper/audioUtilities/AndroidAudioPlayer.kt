@@ -13,6 +13,8 @@ class AndroidAudioPlayer(
     private var player: MediaPlayer? = null
     private val audioQueue = mutableListOf<File>()
 
+    var onPlaybackCompleted: (() -> Unit)? = null
+
     init {
         setupPlayer()
     }
@@ -28,6 +30,9 @@ class AndroidAudioPlayer(
         player = MediaPlayer().apply {
             setOnCompletionListener {
                 playNext()
+                if (audioQueue.isEmpty()) {
+                    onPlaybackCompleted?.invoke()
+                }
             }
         }
     }
@@ -46,8 +51,9 @@ class AndroidAudioPlayer(
         }
     }
 
-    private fun releasePlayer() {
-        player?.release()
-        player = null
+    fun stopPlayer(){
+        player?.stop()
+        player?.reset()
+        audioQueue.clear()
     }
 }

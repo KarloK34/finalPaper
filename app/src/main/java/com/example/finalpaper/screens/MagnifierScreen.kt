@@ -19,6 +19,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.app.ActivityCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.finalpaper.audioUtilities.TextToSpeechController
 import com.example.finalpaper.permissions.PermissionsViewModel
 import com.example.finalpaper.components.CameraPreview
 import com.example.finalpaper.permissions.HandleDialogs
@@ -26,7 +27,8 @@ import com.example.finalpaper.permissions.HandleDialogs
 
 @Composable
 fun MagnifierScreen(
-    controller: LifecycleCameraController
+    controller: LifecycleCameraController,
+    ttsController: TextToSpeechController
 ) {
     val viewModel: PermissionsViewModel = viewModel()
     val dialogQueue = viewModel.visiblePermissionDialogQueue
@@ -55,12 +57,13 @@ fun MagnifierScreen(
         dialogQueue = dialogQueue,
         viewModel = viewModel,
         context = context,
+        ttsController = ttsController,
         permissionResultLauncher = cameraPermissionResultLauncher
     )
 
     if (cameraPermissionGranted) {
         Box(modifier = Modifier.fillMaxSize()) {
-            CameraPreview(controller = controller, Modifier.fillMaxSize())
+            CameraPreview(controller = controller, Modifier.fillMaxSize(), ttsController)
         }
     } else {
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {

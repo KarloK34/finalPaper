@@ -11,13 +11,11 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.runBlocking
 import kotlin.math.exp
 import kotlin.math.roundToInt
 import kotlin.math.sqrt
 
 suspend fun applyUnsharpMaskFilter(image: ImageBitmap): ImageBitmap {
-    Log.d("Test", "Pocetak")
     val originalWidth = image.width
     val originalHeight = image.height
     val targetWidth = originalWidth / 2
@@ -70,7 +68,6 @@ suspend fun applyUnsharpMask(inputBitmap: Bitmap, kernel: Array<DoubleArray>, st
     val resultBitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
     resultBitmap.setPixels(resultPixels, 0, width, 0, 0, width, height)
 
-    Log.d("Test", "Kraj")
     return resultBitmap
 }
 

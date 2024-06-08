@@ -10,10 +10,12 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.example.finalpaper.audioUtilities.TextToSpeechController
 
 @Composable
 fun PermissionDialog(
@@ -22,8 +24,14 @@ fun PermissionDialog(
     onDismiss: () -> Unit,
     onOkClick: () -> Unit,
     onGoToAppSettingsClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    ttsController: TextToSpeechController
 ) {
+    val text = permissionTextProvider.getDescription(isPermanentlyDeclined)
+
+    LaunchedEffect(Unit) {
+        ttsController.speak(text)
+    }
     AlertDialog(
         onDismissRequest = onDismiss,
         confirmButton = {
@@ -43,8 +51,10 @@ fun PermissionDialog(
                         .fillMaxWidth()
                         .clickable {
                             if (isPermanentlyDeclined) {
+                                ttsController.speak("Grant permission")
                                 onGoToAppSettingsClick()
                             } else {
+                                ttsController.speak("OK")
                                 onOkClick()
                             }
                         }

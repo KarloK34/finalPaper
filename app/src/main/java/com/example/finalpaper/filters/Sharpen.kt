@@ -2,17 +2,14 @@ package com.example.finalpaper.filters
 
 import android.graphics.Bitmap
 import android.graphics.Color
-import android.util.Log
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.runBlocking
 
 suspend fun applySharpenFilter(originalImage: ImageBitmap): ImageBitmap {
-    Log.d("Test", "Pocetak")
     val kernel = arrayOf(
         doubleArrayOf(0.0, -1.0, 0.0),
         doubleArrayOf(-1.0, 5.0, -1.0),

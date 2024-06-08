@@ -4,8 +4,10 @@ import android.Manifest
 import android.app.AlertDialog
 import android.content.Context
 import android.content.pm.PackageManager
-import android.util.Log
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -16,12 +18,12 @@ import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.core.app.ActivityCompat
@@ -44,14 +46,9 @@ fun MapButtonsRow(
     voiceRecordingViewModel: VoiceRecordingViewModel,
     currentLocation: LatLng? = null,
     context: Context,
-    dao: VoiceRecordingDao
+    dao: VoiceRecordingDao,
+    ttsController: TextToSpeechController
 ) {
-    val ttsController = remember { TextToSpeechController(context) }
-    DisposableEffect(Unit) {
-        onDispose {
-            ttsController.shutdown()
-        }
-    }
     var nearbyRecordings by remember { mutableStateOf<List<VoiceRecording>>(emptyList()) }
 
     val categories = arrayOf("RESTAURANT", "CAFE'S", "SCHOOL")
@@ -62,8 +59,10 @@ fun MapButtonsRow(
         .setTitle("SELECT POINT OF INTEREST CATEGORY TO ANNOUNCE")
         .setSingleChoiceItems(categories, 0) { _, which ->
             selectedCategory = categories[which]
+            ttsController.speak(categories[which])
         }
         .setPositiveButton("Announce") { _, _ ->
+            ttsController.speak("Announce")
             fetchAndAnnouncePOIs(selectedCategory, currentLocation, context, ttsController)
         }
 
@@ -78,97 +77,114 @@ fun MapButtonsRow(
                 pois.forEach { poiLikelihood ->
                     poiLikelihood.place.let {
                         ttsController.speak("You are near ${it.name}")
-                        it.name?.let { it1 -> Log.d("TEST", it1) }
                     }
                 }
             }
             isSurroundingButtonClicked.value = !isSurroundingButtonClicked.value
         }
     }
-
-    Row {
-        FloatingActionButton(onClick = {
-            selectedCategory = categories[0]
-            dialog.show()
-        }, modifier = Modifier.padding(start = 16.dp)) {
-            Icon(
-                imageVector = Icons.Default.Menu,
-                contentDescription = "Point of interest categories"
-            )
-        }
-        FloatingActionButton(
-            onClick = { isSurroundingButtonClicked.value = !isSurroundingButtonClicked.value },
-            modifier = Modifier
-                .padding(start = 16.dp, bottom = 30.dp)
-        ) {
-            Icon(imageVector = Icons.Default.Info, contentDescription = "Surroundings")
+    Row(
+        verticalAlignment = Alignment.Bottom,
+        horizontalArrangement = Arrangement.SpaceBetween,
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(16.dp)
+    ) {
+        Column {
+            FloatingActionButton(onClick = {
+                selectedCategory = categories[0]
+                ttsController.speak("Select POI category to announce")
+                dialog.show()
+            }, modifier = Modifier.padding(10.dp)) {
+                Icon(
+                    imageVector = Icons.Default.Menu,
+                    contentDescription = "Point of interest categories"
+                )
+            }
         }
         if (ActivityCompat.checkSelfPermission(
                 context,
                 Manifest.permission.RECORD_AUDIO
             ) == PackageManager.PERMISSION_GRANTED
         ) {
-            FloatingActionButton(
-                onClick = {
-                    if (state.isAddingVoiceRecording) {
-                        voiceRecordingViewModel.stopRecording()
-                        voiceRecordingViewModel.onEvent(
-                            VoiceRecordingEvent.SetLatitude(
-                                currentLocation!!.latitude
-                            )
-                        )
-                        voiceRecordingViewModel.onEvent(
-                            VoiceRecordingEvent.SetLongitude(
-                                currentLocation.longitude
-                            )
-                        )
-                        voiceRecordingViewModel.onEvent(
-                            VoiceRecordingEvent.SetTimestamp(
-                                System.currentTimeMillis()
-                            )
-                        )
-                        voiceRecordingViewModel.onEvent(VoiceRecordingEvent.SaveVoiceRecording)
-                    } else {
-                        voiceRecordingViewModel.startRecording(context)
-                    }
-                },
-                modifier = Modifier
-                    .padding(start = 16.dp, bottom = 30.dp)
+            Column(
+                modifier = Modifier.padding(bottom = 90.dp),
+                horizontalAlignment = Alignment.End
             ) {
-                Icon(
-                    imageVector = if (state.isAddingVoiceRecording) Icons.Default.Close else Icons.Default.Add,
-                    contentDescription = "Add voice recording"
-                )
-            }
-            LaunchedEffect(key1 = currentLocation) {
-                if (currentLocation != null) {
-                    val latMin = currentLocation.latitude - 0.001
-                    val latMax = currentLocation.latitude + 0.001
-                    val lngMin = currentLocation.longitude - 0.001
-                    val lngMax = currentLocation.longitude + 0.001
-                    val recordings = withContext(Dispatchers.IO) {
-                        dao.getMessagesNearLocation(latMin, latMax, lngMin, lngMax)
+                LaunchedEffect(key1 = currentLocation) {
+                    if (currentLocation != null) {
+                        val latMin = currentLocation.latitude - 0.001
+                        val latMax = currentLocation.latitude + 0.001
+                        val lngMin = currentLocation.longitude - 0.001
+                        val lngMax = currentLocation.longitude + 0.001
+                        val recordings = withContext(Dispatchers.IO) {
+                            dao.getMessagesNearLocation(latMin, latMax, lngMin, lngMax)
+                        }
+                        nearbyRecordings = recordings
                     }
-                    nearbyRecordings = recordings
                 }
-            }
-            if (nearbyRecordings.isNotEmpty()) {
+                if (nearbyRecordings.isNotEmpty()) {
+                    FloatingActionButton(
+                        onClick = {
+                            if (state.isPlayingRecording) {
+                                voiceRecordingViewModel.stopAudio()
+                            } else {
+                                if (nearbyRecordings.isNotEmpty()) {
+                                    nearbyRecordings.forEach {
+                                        voiceRecordingViewModel.playAudio(it.fileName)
+                                    }
+                                }
+                            }
+                        }, modifier = Modifier
+                            .padding(bottom = 10.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Call,
+                            contentDescription = "Hear voice recording"
+                        )
+                    }
+                }
                 FloatingActionButton(
                     onClick = {
-                        nearbyRecordings.forEach {
-                            voiceRecordingViewModel.playAudio(it.fileName)
+                        if (state.isAddingVoiceRecording) {
+                            voiceRecordingViewModel.stopRecording()
+                            voiceRecordingViewModel.onEvent(
+                                VoiceRecordingEvent.SetLatitude(
+                                    currentLocation!!.latitude
+                                )
+                            )
+                            voiceRecordingViewModel.onEvent(
+                                VoiceRecordingEvent.SetLongitude(
+                                    currentLocation.longitude
+                                )
+                            )
+                            voiceRecordingViewModel.onEvent(
+                                VoiceRecordingEvent.SetTimestamp(
+                                    System.currentTimeMillis()
+                                )
+                            )
+                            voiceRecordingViewModel.onEvent(VoiceRecordingEvent.SaveVoiceRecording)
+                        } else {
+                            voiceRecordingViewModel.startRecording(context)
                         }
-                    }, modifier = Modifier
-                        .padding(start = 16.dp, bottom = 30.dp)
+                    }
                 ) {
                     Icon(
-                        imageVector = Icons.Default.Call,
-                        contentDescription = "Hear voice recording"
+                        imageVector = if (state.isAddingVoiceRecording) Icons.Default.Close else Icons.Default.Add,
+                        contentDescription = "Add voice recording"
                     )
+                }
+                FloatingActionButton(
+                    onClick = {
+                        ttsController.speak("Surroundings")
+                        isSurroundingButtonClicked.value = !isSurroundingButtonClicked.value
+                    },
+                    modifier = Modifier.padding(top = 10.dp)
+                ) {
+                    Icon(imageVector = Icons.Default.Info, contentDescription = "Surroundings")
                 }
             }
         }
-
     }
 }
 
@@ -181,9 +197,9 @@ private fun fetchAndAnnouncePOIs(
     if (currentLocation != null) {
         CoroutineScope(Dispatchers.Main).launch {
             val pois = POIRepository(context).getPOIsOfCategory(currentLocation, 200, category)
+            if (pois.isEmpty()) ttsController.speak("There is no $category near you")
             pois.forEach { poi ->
                 ttsController.speak("You are near ${poi.name}")
-                Log.d("POI", poi.name)
             }
         }
     }

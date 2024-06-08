@@ -9,5 +9,6 @@ data class VoiceRecordingState(
     val latitude: Double = 0.0,
     val longitude: Double = 0.0,
     val timestamp: Long = 0L,
-    val isAddingVoiceRecording: Boolean = false
+    val isAddingVoiceRecording: Boolean = false,
+    val isPlayingRecording: Boolean = false,
 )

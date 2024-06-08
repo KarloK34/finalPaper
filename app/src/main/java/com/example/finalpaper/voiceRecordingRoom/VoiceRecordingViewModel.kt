@@ -26,12 +26,17 @@ class VoiceRecordingViewModel(
     }
 
     private val player by lazy {
-        AndroidAudioPlayer(context)
+        AndroidAudioPlayer(context).apply {
+            onPlaybackCompleted = {
+                _state.update { it.copy(isPlayingRecording = false) }
+            }
+        }
     }
 
     private var audioFile: File? = null
 
     private var audioFileName: String = ""
+
     init {
         viewModelScope.launch {
             val recordings = withContext(Dispatchers.IO) {
@@ -40,41 +45,55 @@ class VoiceRecordingViewModel(
             _state.value = VoiceRecordingState(voiceRecordings = recordings)
         }
     }
+
     fun startRecording(context: Context) {
         audioFileName = "voice_recording_${System.currentTimeMillis()}.3gp"
-        File(context.filesDir,audioFileName).also {
+        File(context.filesDir, audioFileName).also {
             recorder.start(it)
             audioFile = it
         }
-        _state.update { it.copy(
-            isAddingVoiceRecording = true
-        ) }
+        _state.update {
+            it.copy(
+                isAddingVoiceRecording = true
+            )
+        }
     }
+
     fun stopRecording() {
         recorder.stop()
         _state.update { it.copy(fileName = audioFileName, audioFile = audioFile) }
     }
+
     private fun getAudioFile(fileName: String): File {
         return File(context.filesDir, fileName)
     }
+
     fun playAudio(fileName: String) {
         val audioFile = getAudioFile(fileName)
         player.playFile(audioFile)
+        _state.update { it.copy(isPlayingRecording = true) }
     }
+
+    fun stopAudio() {
+        player.stopPlayer()
+        _state.update { it.copy(isPlayingRecording = false) }
+    }
+
     fun onEvent(event: VoiceRecordingEvent) {
-        when(event) {
+        when (event) {
             is VoiceRecordingEvent.DeleteVoiceRecording -> {
                 viewModelScope.launch {
                     dao.delete(event.voiceRecording)
                 }
             }
+
             VoiceRecordingEvent.SaveVoiceRecording -> {
                 val fileName = state.value.fileName
                 val latitude = state.value.latitude
                 val longitude = state.value.longitude
                 val timestamp = state.value.timestamp
 
-                if(fileName.isBlank() || latitude.isNaN() || longitude.isNaN()){
+                if (fileName.isBlank() || latitude.isNaN() || longitude.isNaN()) {
                     return
                 }
 
@@ -91,29 +110,41 @@ class VoiceRecordingViewModel(
                     }
                     _state.value = VoiceRecordingState(voiceRecordings = recordings)
                 }
-                _state.update { it.copy(
-                    isAddingVoiceRecording = false,
-                    fileName = "",
-                    audioFile = null,
-                    latitude = 0.0,
-                    longitude = 0.0,
-                    timestamp = 0L
-                ) }
+                _state.update {
+                    it.copy(
+                        isAddingVoiceRecording = false,
+                        isPlayingRecording = false,
+                        fileName = "",
+                        audioFile = null,
+                        latitude = 0.0,
+                        longitude = 0.0,
+                        timestamp = 0L
+                    )
+                }
             }
+
             is VoiceRecordingEvent.SetLatitude -> {
-                _state.update { it.copy(
-                    latitude = event.latitude
-                ) }
+                _state.update {
+                    it.copy(
+                        latitude = event.latitude
+                    )
+                }
             }
+
             is VoiceRecordingEvent.SetLongitude -> {
-                _state.update { it.copy(
-                    longitude = event.longitude
-                ) }
+                _state.update {
+                    it.copy(
+                        longitude = event.longitude
+                    )
+                }
             }
+
             is VoiceRecordingEvent.SetTimestamp -> {
-                _state.update { it.copy(
-                    timestamp = event.timestamp
-                ) }
+                _state.update {
+                    it.copy(
+                        timestamp = event.timestamp
+                    )
+                }
             }
         }
     }

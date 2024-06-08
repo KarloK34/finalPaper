@@ -8,12 +8,14 @@ import androidx.activity.compose.ManagedActivityResultLauncher
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.core.app.ActivityCompat
+import com.example.finalpaper.audioUtilities.TextToSpeechController
 
 @Composable
 fun HandleDialogs(
     dialogQueue: SnapshotStateList<String>,
     viewModel: PermissionsViewModel,
     context: Context,
+    ttsController: TextToSpeechController,
     permissionResultLauncher: ManagedActivityResultLauncher<String, Boolean>? = null,
     multiplePermissionResultLauncher: ManagedActivityResultLauncher<Array<String>, Map<String, @JvmSuppressWildcards Boolean>>? = null
 ) {
@@ -36,7 +38,8 @@ fun HandleDialogs(
                     permissionResultLauncher?.launch(permission)
                     multiplePermissionResultLauncher?.launch(arrayOf(permission))
                 },
-                onGoToAppSettingsClick = { openAppSettings(context) }
+                onGoToAppSettingsClick = { openAppSettings(context) },
+                ttsController = ttsController
             )
         }
     }

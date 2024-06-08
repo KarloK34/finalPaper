@@ -18,16 +18,26 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import com.example.finalpaper.R
+import com.example.finalpaper.audioUtilities.TextToSpeechController
 
 
 @Composable
-fun Torch(controller: LifecycleCameraController) {
+fun Torch(controller: LifecycleCameraController, ttsController: TextToSpeechController) {
     var isFlashlightOn by remember { mutableStateOf(false) }
 
     IconButton(
         onClick = {
             isFlashlightOn = !isFlashlightOn
             controller.enableTorch(isFlashlightOn)
+            ttsController.speak(
+                "Flashlight ${
+                    if (isFlashlightOn) {
+                        "on"
+                    } else {
+                        "off"
+                    }
+                }"
+            )
         },
         modifier = Modifier
             .clip(RoundedCornerShape(16.dp))
