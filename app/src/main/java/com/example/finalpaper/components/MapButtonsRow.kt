@@ -25,8 +25,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.core.app.ActivityCompat
+import com.example.finalpaper.R
 import com.example.finalpaper.audioUtilities.TextToSpeechController
 import com.example.finalpaper.locationUtilities.POIRepository
 import com.example.finalpaper.voiceRecordingRoom.VoiceRecording
@@ -59,10 +61,10 @@ fun MapButtonsRow(
         .setTitle("SELECT POINT OF INTEREST CATEGORY TO ANNOUNCE")
         .setSingleChoiceItems(categories, 0) { _, which ->
             selectedCategory = categories[which]
-            ttsController.speak(categories[which])
+            ttsController.speakInterruptingly(categories[which])
         }
         .setPositiveButton("Announce") { _, _ ->
-            ttsController.speak("Announce")
+            ttsController.speakInterruptingly("Announce")
             fetchAndAnnouncePOIs(selectedCategory, currentLocation, context, ttsController)
         }
 
@@ -93,7 +95,7 @@ fun MapButtonsRow(
         Column {
             FloatingActionButton(onClick = {
                 selectedCategory = categories[0]
-                ttsController.speak("Select POI category to announce")
+                ttsController.speakInterruptingly("Select POI category to announce")
                 dialog.show()
             }, modifier = Modifier.padding(10.dp)) {
                 Icon(
@@ -108,7 +110,7 @@ fun MapButtonsRow(
             ) == PackageManager.PERMISSION_GRANTED
         ) {
             Column(
-                modifier = Modifier.padding(bottom = 90.dp),
+                modifier = Modifier.padding(bottom = 95.dp),
                 horizontalAlignment = Alignment.End
             ) {
                 LaunchedEffect(key1 = currentLocation) {
@@ -139,7 +141,7 @@ fun MapButtonsRow(
                             .padding(bottom = 10.dp)
                     ) {
                         Icon(
-                            imageVector = Icons.Default.Call,
+                            painter = painterResource(id = R.drawable.baseline_hearing_24),
                             contentDescription = "Hear voice recording"
                         )
                     }
@@ -170,7 +172,10 @@ fun MapButtonsRow(
                     }
                 ) {
                     Icon(
-                        imageVector = if (state.isAddingVoiceRecording) Icons.Default.Close else Icons.Default.Add,
+                        painter = if (state.isAddingVoiceRecording) painterResource(id = R.drawable.baseline_stop_24)
+                        else painterResource(
+                            id = R.drawable.baseline_mic_24
+                        ),
                         contentDescription = "Add voice recording"
                     )
                 }

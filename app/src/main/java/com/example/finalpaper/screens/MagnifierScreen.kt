@@ -17,6 +17,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.sp
 import androidx.core.app.ActivityCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.finalpaper.audioUtilities.TextToSpeechController
@@ -67,7 +69,7 @@ fun MagnifierScreen(
         }
     } else {
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            Text(text = "Requesting camera permission...")
+            Text(text = "Requesting camera permission...", fontSize = 30.sp, textAlign = TextAlign.Center)
         }
     }
 

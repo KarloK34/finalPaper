@@ -2,6 +2,7 @@ package com.example.finalpaper.screens
 
 import android.Manifest
 import android.content.pm.PackageManager
+import android.util.DisplayMetrics
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Box
@@ -25,7 +26,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.core.app.ActivityCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.finalpaper.MainActivity
@@ -123,7 +126,7 @@ fun MapScreen(ttsController: TextToSpeechController) {
         ) {
             if (loading) {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Text(text = "Loading current location...")
+                    Text(text = "Loading current location...", fontSize = 30.sp, textAlign = TextAlign.Center)
                 }
                 startLocationUpdates(locationClient) { location ->
                     currentLocation = LatLng(location.latitude, location.longitude)
@@ -154,6 +157,9 @@ fun MapScreen(ttsController: TextToSpeechController) {
                         Marker(
                             state = onClickMarker,
                             title = "Location of Interest",
+                            onInfoWindowClick = {
+                                ttsController.speakInterruptingly("Location of Interest")
+                            }
                         )
                     Marker(
                         state = markerState,
@@ -168,16 +174,22 @@ fun MapScreen(ttsController: TextToSpeechController) {
                             title = "Click to Hear Voice Recording",
                             snippet = "Recorded at ${getFormattedTime(recording.timestamp)}",
                             onInfoWindowClick = {
-                                voiceRecordingViewModel.playAudio(recording.fileName)
+                                if (state.isPlayingRecording) {
+                                    voiceRecordingViewModel.stopAudio()
+                                } else {
+                                    voiceRecordingViewModel.playAudio(recording.fileName)
+                                }
                             }
                         )
                     }
                 }
                 FloatingActionButton(onClick = {
-                    ttsController.speak("Current location view")
+                    ttsController.speakInterruptingly("Current location view")
                     cameraPositionState.position =
                         CameraPosition.fromLatLngZoom(currentLocation!!, 16f)
-                }, modifier = Modifier.align(Alignment.TopEnd).padding(16.dp)) {
+                }, modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .padding(16.dp)) {
                     Icon(Icons.Default.LocationOn, contentDescription = "Current Location")
                 }
                 LaunchedEffect(Unit) {
@@ -186,9 +198,11 @@ fun MapScreen(ttsController: TextToSpeechController) {
                         animationQueue.addToQueue(newLatLng)
                     }
                 }
-                Row(modifier = Modifier
-                    .align(Alignment.BottomStart)
-                    .fillMaxWidth()) {
+                Row(
+                    modifier = Modifier
+                        .align(Alignment.BottomStart)
+                        .fillMaxWidth()
+                ) {
                     MapButtonsRow(
                         state = state,
                         voiceRecordingViewModel = voiceRecordingViewModel,
@@ -202,6 +216,7 @@ fun MapScreen(ttsController: TextToSpeechController) {
         }
     }
 }
+
 fun getFormattedTime(timeInMillis: Long): String {
     val date = Date(timeInMillis)
     val format = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())

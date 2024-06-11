@@ -30,7 +30,7 @@ fun PermissionDialog(
     val text = permissionTextProvider.getDescription(isPermanentlyDeclined)
 
     LaunchedEffect(Unit) {
-        ttsController.speak(text)
+        ttsController.speakInterruptingly(text)
     }
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -51,10 +51,10 @@ fun PermissionDialog(
                         .fillMaxWidth()
                         .clickable {
                             if (isPermanentlyDeclined) {
-                                ttsController.speak("Grant permission")
+                                ttsController.speakInterruptingly("Grant permission")
                                 onGoToAppSettingsClick()
                             } else {
-                                ttsController.speak("OK")
+                                ttsController.speakInterruptingly("OK")
                                 onOkClick()
                             }
                         }

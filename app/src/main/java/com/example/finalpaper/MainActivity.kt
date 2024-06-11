@@ -8,7 +8,10 @@ import androidx.camera.core.ImageCapture
 import androidx.camera.view.CameraController
 import androidx.camera.view.LifecycleCameraController
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -43,7 +46,9 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         PlacesClientProvider.getClient(this)
         setContent {
-            FinalPaperTheme {
+            var isColorBlind by remember { mutableStateOf(false) }
+
+            FinalPaperTheme(isColorBlind = isColorBlind) {
                 val controller = remember {
                     LifecycleCameraController(applicationContext).apply {
                         setEnabledUseCases(
@@ -66,7 +71,16 @@ class MainActivity : ComponentActivity() {
                     startDestination = Screen.Home.route
                 ) {
                     composable(Screen.Home.route) {
-                        HomeScreen(navController, ttsController)
+                        HomeScreen(
+                            navController,
+                            ttsController,
+                            isColorBlind = isColorBlind,
+                            onToggleTheme = {
+                                isColorBlind = !isColorBlind
+                                if (!isColorBlind) ttsController.speakInterruptingly("Regular theme") else ttsController.speakInterruptingly(
+                                    "Color blind theme"
+                                )
+                            })
                     }
 
                     composable(Screen.Magnifier.route) {

@@ -3,7 +3,6 @@ package com.example.finalpaper.filters
 import android.graphics.Bitmap
 import android.graphics.Color
 import android.graphics.Matrix
-import android.util.Log
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asAndroidBitmap
 import androidx.compose.ui.graphics.asImageBitmap

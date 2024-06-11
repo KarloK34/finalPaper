@@ -7,6 +7,9 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonColors
+import androidx.compose.material3.IconButtonDefaults
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -29,7 +32,7 @@ fun Torch(controller: LifecycleCameraController, ttsController: TextToSpeechCont
         onClick = {
             isFlashlightOn = !isFlashlightOn
             controller.enableTorch(isFlashlightOn)
-            ttsController.speak(
+            ttsController.speakInterruptingly(
                 "Flashlight ${
                     if (isFlashlightOn) {
                         "on"
@@ -41,16 +44,16 @@ fun Torch(controller: LifecycleCameraController, ttsController: TextToSpeechCont
         },
         modifier = Modifier
             .clip(RoundedCornerShape(16.dp))
-            .height(60.dp)
-            .width(60.dp)
-            .background(
-                color = if (isFlashlightOn) Color.Yellow else Color.LightGray
-            )
+            .height(80.dp)
+            .width(80.dp),
+        colors = IconButtonDefaults.iconButtonColors(
+            containerColor = if (!isFlashlightOn) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.secondaryContainer,
+            contentColor = if (!isFlashlightOn) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSecondaryContainer
+        )
     ) {
         Icon(
             painter = painterResource(R.drawable.ic_flash_on),
             contentDescription = "Flashlight",
-            tint = if (isFlashlightOn) Color.Black else Color.White
         )
     }
 }

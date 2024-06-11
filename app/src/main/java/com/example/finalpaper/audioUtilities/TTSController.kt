@@ -21,10 +21,13 @@ class TextToSpeechController(context: Context) {
         tts!!.setSpeechRate(0.8f)
     }
 
+    fun speakInterruptingly(text: String) {
+        tts?.speak(text, TextToSpeech.QUEUE_FLUSH, null, null)
+    }
+
     fun speak(text: String) {
         tts?.speak(text, TextToSpeech.QUEUE_ADD, null, null)
     }
-
     fun shutdown() {
         tts?.stop()
         tts?.shutdown()

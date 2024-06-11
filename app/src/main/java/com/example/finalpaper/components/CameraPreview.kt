@@ -8,7 +8,7 @@ import androidx.camera.core.ImageProxy
 import androidx.camera.view.LifecycleCameraController
 import androidx.camera.view.PreviewView
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -21,6 +21,8 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonDefaults
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -30,7 +32,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asAndroidBitmap
 import androidx.compose.ui.layout.ContentScale
@@ -72,6 +73,7 @@ fun CameraPreview(
     var isSobelApplied by remember { mutableStateOf(false) }
     var isSharpenApplied by remember { mutableStateOf(false) }
     var isUnsharpMaskApplied by remember { mutableStateOf(false) }
+    var showFilterButtons by remember { mutableStateOf(false) }
 
     Box {
         if (capturedImageBitmap != null && isFrozen) {
@@ -91,8 +93,106 @@ fun CameraPreview(
                 modifier = Modifier
                     .align(Alignment.BottomStart)
                     .padding(30.dp)
+                    .fillMaxWidth()
             ) {
-                Row {
+                if (showFilterButtons) {
+                    Row(
+                        horizontalArrangement = Arrangement.End,
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.padding(bottom = 10.dp).fillMaxWidth()
+                    ) {
+                        if (sobelImageBitmap != null) {
+                            IconButton(
+                                onClick = {
+                                    if (isSobelApplied) ttsController.speakInterruptingly("Remove Sobel filter")
+                                    else ttsController.speakInterruptingly("Apply Sobel filter")
+                                    isFilterApplied =
+                                        if (isSharpenApplied || isUnsharpMaskApplied) true
+                                        else !isFilterApplied
+                                    isSobelApplied = !isSobelApplied
+                                    isUnsharpMaskApplied = false
+                                    isSharpenApplied = false
+                                    filteredImageBitmap = sobelImageBitmap
+                                },
+                                modifier = Modifier
+                                    .padding(start = 10.dp)
+                                    .clip(RoundedCornerShape(16.dp))
+                                    .height(65.dp)
+                                    .width(65.dp),
+                                colors = IconButtonDefaults.iconButtonColors(
+                                    containerColor = if(!isSobelApplied) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.secondaryContainer,
+                                    contentColor = if (!isSobelApplied) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSecondaryContainer
+                                )
+                            ) {
+                                Icon(
+                                    painter = painterResource(id = R.drawable.baseline_filter_1_24),
+                                    contentDescription = "Apply or Undo Sobel Filter"
+                                )
+                            }
+                        }
+                        if (sharpenImageBitmap != null) {
+                            IconButton(
+                                onClick = {
+                                    if (isSharpenApplied) ttsController.speakInterruptingly("Remove Sharpen filter")
+                                    else ttsController.speakInterruptingly("Apply Sharpen filter")
+                                    isFilterApplied =
+                                        if (isSobelApplied || isUnsharpMaskApplied) true
+                                        else !isFilterApplied
+                                    isSharpenApplied = !isSharpenApplied
+                                    isSobelApplied = false
+                                    isUnsharpMaskApplied = false
+                                    filteredImageBitmap = sharpenImageBitmap
+                                },
+                                modifier = Modifier
+                                    .padding(start = 10.dp)
+                                    .clip(RoundedCornerShape(16.dp))
+                                    .height(65.dp)
+                                    .width(65.dp),
+                                colors = IconButtonDefaults.iconButtonColors(
+                                    containerColor = if(!isSharpenApplied) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.secondaryContainer,
+                                    contentColor = if (!isSharpenApplied) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSecondaryContainer
+                                )
+                            ) {
+                                Icon(
+                                    painter = painterResource(id = R.drawable.baseline_filter_2_24),
+                                    contentDescription = "Apply or Undo Sharpen Filter"
+                                )
+                            }
+                        }
+                        if (unsharpMaskImageBitmap != null) {
+                            IconButton(
+                                onClick = {
+                                    if (isUnsharpMaskApplied) ttsController.speakInterruptingly(
+                                        "Remove Unsharp mask filter"
+                                    )
+                                    else ttsController.speakInterruptingly("Apply Unsharp mask filter")
+                                    isFilterApplied =
+                                        if (isSobelApplied || isSharpenApplied) true
+                                        else !isFilterApplied
+                                    isUnsharpMaskApplied = !isUnsharpMaskApplied
+                                    isSobelApplied = false
+                                    isSharpenApplied = false
+                                    filteredImageBitmap = unsharpMaskImageBitmap
+                                },
+                                modifier = Modifier
+                                    .padding(start = 10.dp)
+                                    .clip(RoundedCornerShape(16.dp))
+                                    .height(65.dp)
+                                    .width(65.dp),
+                                colors = IconButtonDefaults.iconButtonColors(
+                                    containerColor = if(!isUnsharpMaskApplied) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.secondaryContainer,
+                                    contentColor = if (!isUnsharpMaskApplied) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSecondaryContainer
+                                )
+                            ) {
+                                Icon(
+                                    painter = painterResource(id = R.drawable.baseline_filter_3_24),
+                                    contentDescription = "Apply or Undo Unsharp Mask Filter"
+                                )
+                            }
+                        }
+                    }
+                }
+                Row(horizontalArrangement = Arrangement.Start, modifier = Modifier.fillMaxWidth()) {
                     IconButton(
                         onClick = {
                             if (isFilterApplied) {
@@ -102,7 +202,7 @@ fun CameraPreview(
                                     "Filtered photo saved to gallery",
                                     Toast.LENGTH_SHORT
                                 ).show()
-                                ttsController.speak("Filtered photo saved to gallery")
+                                ttsController.speakInterruptingly("Filtered photo saved to gallery")
                             } else {
                                 saveImageToGallery(capturedImageBitmap!!.asAndroidBitmap(), context)
                                 Toast.makeText(
@@ -111,16 +211,17 @@ fun CameraPreview(
                                     Toast.LENGTH_SHORT
                                 )
                                     .show()
-                                ttsController.speak("Photo saved to gallery")
+                                ttsController.speakInterruptingly("Photo saved to gallery")
                             }
                         },
                         modifier = Modifier
                             .clip(RoundedCornerShape(16.dp))
-                            .height(55.dp)
-                            .width(55.dp)
-                            .background(
-                                color = Color.LightGray
-                            )
+                            .height(80.dp)
+                            .width(80.dp),
+                        colors = IconButtonDefaults.iconButtonColors(
+                            containerColor = MaterialTheme.colorScheme.primaryContainer,
+                            contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                        )
                     ) {
                         Icon(
                             painter = painterResource(id = R.drawable.ic_gallery),
@@ -130,7 +231,7 @@ fun CameraPreview(
                     Spacer(modifier = Modifier.width(10.dp))
                     IconButton(
                         onClick = {
-                            ttsController.speak("Reset")
+                            ttsController.speakInterruptingly("Reset")
                             filteredImageBitmap = null
                             capturedImageBitmap = null
                             sobelImageBitmap = null
@@ -143,100 +244,33 @@ fun CameraPreview(
                             isUnsharpMaskApplied = false
                         }, modifier = Modifier
                             .clip(RoundedCornerShape(16.dp))
-                            .height(55.dp)
-                            .width(55.dp)
-                            .background(
-                                color = Color.LightGray
-                            )
+                            .height(80.dp)
+                            .width(80.dp),
+                        colors = IconButtonDefaults.iconButtonColors(
+                            containerColor = MaterialTheme.colorScheme.primaryContainer,
+                            contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                        )
                     ) {
                         Icon(
                             painter = painterResource(id = R.drawable.baseline_photo_camera_24),
                             contentDescription = "Reset magnifier"
                         )
                     }
-                    if (sobelImageBitmap != null) {
-                        IconButton(
-                            onClick = {
-                                if (isSobelApplied) ttsController.speak("Remove Sobel filter")
-                                else ttsController.speak("Apply Sobel filter")
-                                isFilterApplied =
-                                    if(isSharpenApplied || isUnsharpMaskApplied) true
-                                    else !isFilterApplied
-                                isSobelApplied = !isSobelApplied
-                                isUnsharpMaskApplied = false
-                                isSharpenApplied = false
-                                filteredImageBitmap = sobelImageBitmap
-                            },
-                            modifier = Modifier
-                                .padding(start = 10.dp)
-                                .clip(RoundedCornerShape(16.dp))
-                                .height(55.dp)
-                                .width(55.dp)
-                                .background(
-                                    if (isSobelApplied) Color.Yellow else Color.LightGray
-                                )
-                        ) {
-                            Icon(
-                                painter = painterResource(id = R.drawable.baseline_filter_1_24),
-                                contentDescription = "Apply or Undo Sobel Filter"
-                            )
-                        }
-                    }
-                    if (sharpenImageBitmap != null) {
-                        IconButton(
-                            onClick = {
-                                if (isSharpenApplied) ttsController.speak("Remove Sharpen filter")
-                                else ttsController.speak("Apply Sharpen filter")
-                                isFilterApplied =
-                                    if(isSobelApplied || isUnsharpMaskApplied) true
-                                    else !isFilterApplied
-                                isSharpenApplied = !isSharpenApplied
-                                isSobelApplied = false
-                                isUnsharpMaskApplied = false
-                                filteredImageBitmap = sharpenImageBitmap
-                            },
-                            modifier = Modifier
-                                .padding(start = 10.dp)
-                                .clip(RoundedCornerShape(16.dp))
-                                .height(55.dp)
-                                .width(55.dp)
-                                .background(
-                                    if (isSharpenApplied) Color.Yellow else Color.LightGray
-                                )
-                        ) {
-                            Icon(
-                                painter = painterResource(id = R.drawable.baseline_filter_2_24),
-                                contentDescription = "Apply or Undo Sharpen Filter"
-                            )
-                        }
-                    }
-                    if (unsharpMaskImageBitmap != null) {
-                        IconButton(
-                            onClick = {
-                                if (isUnsharpMaskApplied) ttsController.speak("Remove Unsharp mask filter")
-                                else ttsController.speak("Apply Unsharp mask filter")
-                                isFilterApplied =
-                                    if(isSobelApplied || isSharpenApplied) true
-                                    else !isFilterApplied
-                                isUnsharpMaskApplied = !isUnsharpMaskApplied
-                                isSobelApplied = false
-                                isSharpenApplied = false
-                                filteredImageBitmap = unsharpMaskImageBitmap
-                            },
-                            modifier = Modifier
-                                .padding(start = 10.dp)
-                                .clip(RoundedCornerShape(16.dp))
-                                .height(55.dp)
-                                .width(55.dp)
-                                .background(
-                                    if (isUnsharpMaskApplied) Color.Yellow else Color.LightGray
-                                )
-                        ) {
-                            Icon(
-                                painter = painterResource(id = R.drawable.baseline_filter_3_24),
-                                contentDescription = "Apply or Undo Unsharp Mask Filter"
-                            )
-                        }
+                    Spacer(modifier = Modifier.width(10.dp))
+                    IconButton(
+                        onClick = { showFilterButtons = !showFilterButtons }, modifier = Modifier
+                            .clip(RoundedCornerShape(16.dp))
+                            .height(80.dp)
+                            .width(80.dp),
+                        colors = IconButtonDefaults.iconButtonColors(
+                            containerColor = if(!showFilterButtons) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.secondaryContainer,
+                            contentColor = if (!showFilterButtons) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSecondaryContainer
+                        )
+                    ) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.baseline_filter_list_24),
+                            contentDescription = "Filters"
+                        )
                     }
                 }
             }
@@ -259,13 +293,14 @@ fun CameraPreview(
             ) {
                 Row(
                     modifier = Modifier
-                        .fillMaxWidth()
+                        .fillMaxWidth(),
+                    horizontalArrangement = Arrangement.Center
                 ) {
                     Torch(controller, ttsController)
-                    Spacer(modifier = Modifier.width(10.dp))
+                    Spacer(modifier = Modifier.width(20.dp))
                     IconButton(
                         onClick = {
-                            ttsController.speak("Freeze")
+                            ttsController.speakInterruptingly("Freeze")
                             controller.takePicture(
                                 cameraExecutor,
                                 object : ImageCapture.OnImageCapturedCallback() {
@@ -302,11 +337,12 @@ fun CameraPreview(
                                 })
                         }, modifier = Modifier
                             .clip(RoundedCornerShape(16.dp))
-                            .height(60.dp)
-                            .width(60.dp)
-                            .background(
-                                color = Color.LightGray
-                            )
+                            .height(80.dp)
+                            .width(80.dp),
+                        colors = IconButtonDefaults.iconButtonColors(
+                            containerColor = MaterialTheme.colorScheme.primaryContainer,
+                            contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                        )
                     ) {
                         Icon(
                             painter = painterResource(id = R.drawable.ic_freeze),
