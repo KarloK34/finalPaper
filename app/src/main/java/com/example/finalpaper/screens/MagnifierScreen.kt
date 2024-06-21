@@ -23,7 +23,7 @@ import androidx.core.app.ActivityCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.finalpaper.audioUtilities.TextToSpeechController
 import com.example.finalpaper.permissions.PermissionsViewModel
-import com.example.finalpaper.components.CameraPreview
+import com.example.finalpaper.cameraComponents.CameraPreview
 import com.example.finalpaper.permissions.HandleDialogs
 
 

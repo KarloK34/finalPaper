@@ -29,7 +29,8 @@ suspend fun applySobelFilterParallel(inputPixels: IntArray, width: Int, height: 
     val sobelY = arrayOf(intArrayOf(-1, -2, -1), intArrayOf(0, 0, 0), intArrayOf(1, 2, 1))
 
     coroutineScope {
-        val chunkSize = height / 4
+        val numCores = Runtime.getRuntime().availableProcessors()
+        val chunkSize = height / numCores
         val jobs = (0 until height step chunkSize).map { startY ->
             async(Dispatchers.Default) {
                 for (y in startY until (startY + chunkSize).coerceAtMost(height)) {

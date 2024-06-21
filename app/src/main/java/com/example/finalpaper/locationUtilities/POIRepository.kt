@@ -54,9 +54,22 @@ class POIRepository(context: Context) {
 
     private fun mapCategoryToPlaceType(category: String): String {
         return when (category) {
-            "RESTAURANT" -> "restaurant"
-            "CAFE'S" -> "cafe"
-            "SCHOOL" -> "school"
+            "RESTAURANTS" -> "restaurant"
+            "CAFES" -> "cafe"
+            "STORES" -> "store"
+            "BUS STATIONS" -> "bus_station"
+            "ATMs" -> "atm"
+            "TRAIN STATIONS" -> "train_station"
+            "CHURCH" -> "church"
+            "HOSPITALS" -> "hospital"
+            "SUPERMARKETS" -> "supermarket"
+            "BAKERIES" -> "bakery"
+            "BANKS" -> "bank"
+            "GAS STATIONS" -> "gas_station"
+            "PARKS" -> "park"
+            "TOURIST ATTRACTIONS" -> "tourist_attraction"
+            "PARKING'S" -> "parking"
+            "PHARMACIES" -> "pharmacy"
             else -> "point_of_interest"
         }
     }

@@ -3,6 +3,7 @@ package com.example.finalpaper.filters
 import android.graphics.Bitmap
 import android.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.asAndroidBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -11,16 +12,12 @@ import kotlinx.coroutines.coroutineScope
 
 suspend fun applySharpenFilter(originalImage: ImageBitmap): ImageBitmap {
     val kernel = arrayOf(
-        doubleArrayOf(0.0, -1.0, 0.0),
-        doubleArrayOf(-1.0, 5.0, -1.0),
-        doubleArrayOf(0.0, -1.0, 0.0)
+        doubleArrayOf(-1.0, -1.0, -1.0),
+        doubleArrayOf(-1.0, 9.0, -1.0),
+        doubleArrayOf(-1.0, -1.0, -1.0)
     )
-    val originalWidth = originalImage.width
-    val originalHeight = originalImage.height
-    val targetWidth = originalWidth / 2
-    val targetHeight = originalHeight / 2
-    val inputBitmap = downsampleImage(originalImage, targetWidth, targetHeight)
-    return applyConvolutionParallel(inputBitmap, kernel).asImageBitmap()
+
+    return applyConvolutionParallel(originalImage.asAndroidBitmap(), kernel).asImageBitmap()
 }
 
 suspend fun applyConvolutionParallel(inputBitmap: Bitmap, kernel: Array<DoubleArray>): Bitmap {
@@ -33,7 +30,8 @@ suspend fun applyConvolutionParallel(inputBitmap: Bitmap, kernel: Array<DoubleAr
     val resultPixels = IntArray(width * height)
 
     coroutineScope {
-        val chunkSize = height / 4
+        val numCores = Runtime.getRuntime().availableProcessors()
+        val chunkSize = height / numCores
         val jobs = (0 until height step chunkSize).map { startY ->
             async(Dispatchers.Default) {
                 for (y in startY until (startY + chunkSize).coerceAtMost(height)) {

@@ -55,6 +55,9 @@ class MainActivity : ComponentActivity() {
                             CameraController.IMAGE_CAPTURE
                         )
                         imageCaptureMode = ImageCapture.CAPTURE_MODE_MAXIMIZE_QUALITY
+
+                        val maxZoomRatio = cameraInfo?.zoomState?.value?.maxZoomRatio ?: 1f
+                        setZoomRatio(maxZoomRatio)
                     }
                 }
                 val navController = rememberNavController()

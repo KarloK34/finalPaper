@@ -1,18 +1,18 @@
-package com.example.finalpaper.components
+package com.example.finalpaper.navigationComponents
 
 import android.Manifest
 import android.app.AlertDialog
 import android.content.Context
 import android.content.pm.PackageManager
+import android.util.Log
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Call
-import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.FloatingActionButton
@@ -53,7 +53,24 @@ fun MapButtonsRow(
 ) {
     var nearbyRecordings by remember { mutableStateOf<List<VoiceRecording>>(emptyList()) }
 
-    val categories = arrayOf("RESTAURANT", "CAFE'S", "SCHOOL")
+    val categories = arrayOf(
+        "RESTAURANTS",
+        "CAFES",
+        "STORES",
+        "BUS STATIONS",
+        "ATMs",
+        "TRAIN STATIONS",
+        "CHURCHES",
+        "HOSPITALS",
+        "SUPERMARKETS",
+        "BAKERIES",
+        "BANKS",
+        "GAS STATIONS",
+        "PARKS",
+        "TOURIST ATTRACTIONS",
+        "PARKING'S",
+        "PHARMACIES",
+    )
     var selectedCategory by remember { mutableStateOf("RESTAURANT") }
 
     val builder: AlertDialog.Builder = AlertDialog.Builder(context)
@@ -93,13 +110,21 @@ fun MapButtonsRow(
             .padding(16.dp)
     ) {
         Column {
-            FloatingActionButton(onClick = {
-                selectedCategory = categories[0]
-                ttsController.speakInterruptingly("Select POI category to announce")
-                dialog.show()
-            }, modifier = Modifier.padding(10.dp)) {
+            FloatingActionButton(
+                onClick = {
+                    selectedCategory = categories[0]
+                    ttsController.speakInterruptingly("Select Point of Interest category to announce")
+                    dialog.show()
+                }, modifier = Modifier
+                    .padding(10.dp)
+                    .height(70.dp)
+                    .width(70.dp)
+            ) {
                 Icon(
                     imageVector = Icons.Default.Menu,
+                    modifier = Modifier
+                        .height(36.dp)
+                        .width(36.dp),
                     contentDescription = "Point of interest categories"
                 )
             }
@@ -139,6 +164,8 @@ fun MapButtonsRow(
                             }
                         }, modifier = Modifier
                             .padding(bottom = 10.dp)
+                            .height(70.dp)
+                            .width(70.dp)
                     ) {
                         Icon(
                             painter = painterResource(id = R.drawable.baseline_hearing_24),
@@ -169,7 +196,10 @@ fun MapButtonsRow(
                         } else {
                             voiceRecordingViewModel.startRecording(context)
                         }
-                    }
+                    },
+                    modifier = Modifier
+                        .height(70.dp)
+                        .width(70.dp)
                 ) {
                     Icon(
                         painter = if (state.isAddingVoiceRecording) painterResource(id = R.drawable.baseline_stop_24)
@@ -184,9 +214,18 @@ fun MapButtonsRow(
                         ttsController.speak("Surroundings")
                         isSurroundingButtonClicked.value = !isSurroundingButtonClicked.value
                     },
-                    modifier = Modifier.padding(top = 10.dp)
+                    modifier = Modifier
+                        .padding(top = 10.dp)
+                        .height(70.dp)
+                        .width(70.dp)
                 ) {
-                    Icon(imageVector = Icons.Default.Info, contentDescription = "Surroundings")
+                    Icon(
+                        imageVector = Icons.Default.Info,
+                        modifier = Modifier
+                            .height(36.dp)
+                            .width(36.dp),
+                        contentDescription = "Surroundings"
+                    )
                 }
             }
         }
@@ -201,10 +240,11 @@ private fun fetchAndAnnouncePOIs(
 ) {
     if (currentLocation != null) {
         CoroutineScope(Dispatchers.Main).launch {
-            val pois = POIRepository(context).getPOIsOfCategory(currentLocation, 200, category)
+            val pois = POIRepository(context).getPOIsOfCategory(currentLocation, 500, category)
             if (pois.isEmpty()) ttsController.speak("There is no $category near you")
             pois.forEach { poi ->
                 ttsController.speak("You are near ${poi.name}")
+                poi.name.let { it1 -> Log.d("TEST", it1) }
             }
         }
     }

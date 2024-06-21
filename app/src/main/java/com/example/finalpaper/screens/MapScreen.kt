@@ -2,14 +2,15 @@ package com.example.finalpaper.screens
 
 import android.Manifest
 import android.content.pm.PackageManager
-import android.util.DisplayMetrics
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material3.FloatingActionButton
@@ -32,7 +33,7 @@ import androidx.compose.ui.unit.sp
 import androidx.core.app.ActivityCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.finalpaper.MainActivity
-import com.example.finalpaper.components.MapButtonsRow
+import com.example.finalpaper.navigationComponents.MapButtonsRow
 import com.example.finalpaper.locationUtilities.DefaultLocationClient
 import com.example.finalpaper.R
 import com.example.finalpaper.audioUtilities.TextToSpeechController
@@ -126,7 +127,12 @@ fun MapScreen(ttsController: TextToSpeechController) {
         ) {
             if (loading) {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Text(text = "Loading current location...", fontSize = 30.sp, textAlign = TextAlign.Center)
+                    Text(
+                        text = "Loading current location...",
+                        fontSize = 36.sp,
+                        textAlign = TextAlign.Center,
+                        lineHeight = 40.sp
+                    )
                 }
                 startLocationUpdates(locationClient) { location ->
                     currentLocation = LatLng(location.latitude, location.longitude)
@@ -183,14 +189,24 @@ fun MapScreen(ttsController: TextToSpeechController) {
                         )
                     }
                 }
-                FloatingActionButton(onClick = {
-                    ttsController.speakInterruptingly("Current location view")
-                    cameraPositionState.position =
-                        CameraPosition.fromLatLngZoom(currentLocation!!, 16f)
-                }, modifier = Modifier
-                    .align(Alignment.TopEnd)
-                    .padding(16.dp)) {
-                    Icon(Icons.Default.LocationOn, contentDescription = "Current Location")
+                FloatingActionButton(
+                    onClick = {
+                        ttsController.speakInterruptingly("Current location view")
+                        cameraPositionState.position =
+                            CameraPosition.fromLatLngZoom(currentLocation!!, 16f)
+                    }, modifier = Modifier
+                        .align(Alignment.TopEnd)
+                        .padding(16.dp)
+                        .height(70.dp)
+                        .width(70.dp)
+                ) {
+                    Icon(
+                        Icons.Default.LocationOn,
+                        modifier = Modifier
+                            .height(36.dp)
+                            .width(36.dp),
+                        contentDescription = "Current Location"
+                    )
                 }
                 LaunchedEffect(Unit) {
                     locationClient.getLocationUpdates(3000L).collect { location ->

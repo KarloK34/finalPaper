@@ -2,7 +2,6 @@ package com.example.finalpaper.filters
 
 import android.graphics.Bitmap
 import android.graphics.Color
-import android.graphics.Matrix
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asAndroidBitmap
 import androidx.compose.ui.graphics.asImageBitmap
@@ -12,19 +11,13 @@ import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import kotlin.math.exp
 import kotlin.math.roundToInt
-import kotlin.math.sqrt
 
 suspend fun applyUnsharpMaskFilter(image: ImageBitmap): ImageBitmap {
-    val originalWidth = image.width
-    val originalHeight = image.height
-    val targetWidth = originalWidth / 2
-    val targetHeight = originalHeight / 2
-    val inputBitmap = downsampleImage(image,targetWidth,targetHeight)
     val kernelSize = 5
     val strength = 1.0
 
     val gaussianKernel = createGaussianKernel(kernelSize)
-    return applyUnsharpMask(inputBitmap, gaussianKernel, strength).asImageBitmap()
+    return applyUnsharpMask(image.asAndroidBitmap(), gaussianKernel, strength).asImageBitmap()
 }
 suspend fun applyUnsharpMask(inputBitmap: Bitmap, kernel: Array<DoubleArray>, strength: Double): Bitmap {
     val blurredBitmap = applyConvolutionParallel(inputBitmap, kernel)
@@ -40,7 +33,8 @@ suspend fun applyUnsharpMask(inputBitmap: Bitmap, kernel: Array<DoubleArray>, st
     blurredBitmap.getPixels(blurredPixels, 0, width, 0, 0, width, height)
 
     coroutineScope {
-        val chunkSize = height / 4
+        val numCores = Runtime.getRuntime().availableProcessors()
+        val chunkSize = height / numCores
         val jobs = (0 until height step chunkSize).map { startY ->
             async(Dispatchers.Default) {
                 for (y in startY until (startY + chunkSize).coerceAtMost(height)) {
@@ -72,7 +66,7 @@ suspend fun applyUnsharpMask(inputBitmap: Bitmap, kernel: Array<DoubleArray>, st
 
 fun createGaussianKernel(size: Int): Array<DoubleArray> {
     val kernel = Array(size) { DoubleArray(size) }
-    val sigma = size / 10.0
+    val sigma = size / 2.0
     val twoSigmaSquared = 2 * sigma * sigma
     var sum = 0.0
 
@@ -80,7 +74,7 @@ fun createGaussianKernel(size: Int): Array<DoubleArray> {
         for (j in 0 until size) {
             val x = i - size / 2
             val y = j - size / 2
-            kernel[i][j] = exp(-(x * x + y * y) / twoSigmaSquared) / (sqrt(2*Math.PI) * sigma)
+            kernel[i][j] = exp(-(x * x + y * y) / twoSigmaSquared) / (Math.PI * twoSigmaSquared)
             sum += kernel[i][j]
         }
     }
@@ -94,13 +88,3 @@ fun createGaussianKernel(size: Int): Array<DoubleArray> {
     return kernel
 }
 
-fun downsampleImage(image: ImageBitmap, targetWidth: Int, targetHeight: Int): Bitmap {
-    val inputBitmap = image.asAndroidBitmap()
-    val width = inputBitmap.width
-    val height = inputBitmap.height
-
-    val matrix = Matrix()
-    matrix.postScale(targetWidth.toFloat() / width, targetHeight.toFloat() / height)
-
-    return Bitmap.createBitmap(inputBitmap, 0, 0, width, height, matrix, true)
-}
