@@ -4,6 +4,7 @@ import android.Manifest
 import android.app.AlertDialog
 import android.content.Context
 import android.content.pm.PackageManager
+import android.media.MediaPlayer
 import android.util.Log
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -89,10 +90,14 @@ fun MapButtonsRow(
 
     val isSurroundingButtonClicked = remember { mutableStateOf(false) }
 
+    val startMicSound = MediaPlayer.create(context, R.raw.start_mic)
+    val stopMicSound = MediaPlayer.create(context, R.raw.stop_mic)
+
     LaunchedEffect(isSurroundingButtonClicked.value) {
         if (isSurroundingButtonClicked.value) {
             currentLocation.let { location ->
-                val pois = POIRepository(context).getPOIs(location!!, 20)
+                val pois = POIRepository(context).getPOIs(location!!, 30)
+                if (pois.isEmpty()) ttsController.speak("Cannot find anything near you")
                 pois.forEach { poiLikelihood ->
                     poiLikelihood.place.let {
                         ttsController.speak("You are near ${it.name}")
@@ -177,6 +182,7 @@ fun MapButtonsRow(
                     onClick = {
                         if (state.isAddingVoiceRecording) {
                             voiceRecordingViewModel.stopRecording()
+                            stopMicSound.start()
                             voiceRecordingViewModel.onEvent(
                                 VoiceRecordingEvent.SetLatitude(
                                     currentLocation!!.latitude
@@ -194,6 +200,7 @@ fun MapButtonsRow(
                             )
                             voiceRecordingViewModel.onEvent(VoiceRecordingEvent.SaveVoiceRecording)
                         } else {
+                            startMicSound.start()
                             voiceRecordingViewModel.startRecording(context)
                         }
                     },
