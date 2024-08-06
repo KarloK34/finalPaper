@@ -29,6 +29,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.core.app.ActivityCompat
+import com.example.finalpaper.MapViewModel
 import com.example.finalpaper.R
 import com.example.finalpaper.audioUtilities.TextToSpeechController
 import com.example.finalpaper.locationUtilities.POIRepository
@@ -50,7 +51,8 @@ fun MapButtonsRow(
     currentLocation: LatLng? = null,
     context: Context,
     dao: VoiceRecordingDao,
-    ttsController: TextToSpeechController
+    ttsController: TextToSpeechController,
+    mapViewModel: MapViewModel
 ) {
     var nearbyRecordings by remember { mutableStateOf<List<VoiceRecording>>(emptyList()) }
 
@@ -83,7 +85,13 @@ fun MapButtonsRow(
         }
         .setPositiveButton("Announce") { _, _ ->
             ttsController.speakInterruptingly("Announce")
-            fetchAndAnnouncePOIs(selectedCategory, currentLocation, context, ttsController)
+            fetchAndAnnouncePOIs(
+                selectedCategory,
+                currentLocation,
+                context,
+                ttsController,
+                mapViewModel
+            )
         }
 
     val dialog: AlertDialog = builder.create()
@@ -243,15 +251,19 @@ private fun fetchAndAnnouncePOIs(
     category: String,
     currentLocation: LatLng?,
     context: Context,
-    ttsController: TextToSpeechController
+    ttsController: TextToSpeechController,
+    mapViewModel: MapViewModel
 ) {
     if (currentLocation != null) {
         CoroutineScope(Dispatchers.Main).launch {
             val pois = POIRepository(context).getPOIsOfCategory(currentLocation, 500, category)
+            mapViewModel.updatePOIs(pois)
             if (pois.isEmpty()) ttsController.speak("There is no $category near you")
-            pois.forEach { poi ->
-                ttsController.speak("You are near ${poi.name}")
-                poi.name.let { it1 -> Log.d("TEST", it1) }
+            else {
+                pois.forEach { poi ->
+                    ttsController.speak("You are near ${poi.name}")
+                    poi.name.let { it1 -> Log.d("TEST", it1) }
+                }
             }
         }
     }

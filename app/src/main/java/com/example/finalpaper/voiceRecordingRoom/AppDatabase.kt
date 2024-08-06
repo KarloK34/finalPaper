@@ -8,6 +8,5 @@ import androidx.room.RoomDatabase
     version = 2
 )
 abstract class AppDatabase : RoomDatabase() {
-
     abstract fun voiceRecordingDao(): VoiceRecordingDao
 }

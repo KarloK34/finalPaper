@@ -31,7 +31,6 @@ class MainActivity : ComponentActivity() {
         private var db: AppDatabase? = null
 
         fun getDatabase(context: Context): AppDatabase {
-            context.deleteDatabase("app_database")
             if (db == null) {
                 db = Room.databaseBuilder(
                     context.applicationContext,

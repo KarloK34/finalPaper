@@ -89,6 +89,7 @@ fun CameraPreview(
                     isSharpenApplied = false
                     isUnsharpMaskApplied = false
                     showFilterButtons = false
+                    ttsController.speakInterruptingly("Reset")
                 },
                 onToggleFilterButtons = {
                     showFilterButtons = !showFilterButtons

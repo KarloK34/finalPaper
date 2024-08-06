@@ -33,6 +33,7 @@ import androidx.compose.ui.unit.sp
 import androidx.core.app.ActivityCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.finalpaper.MainActivity
+import com.example.finalpaper.MapViewModel
 import com.example.finalpaper.navigationComponents.MapButtonsRow
 import com.example.finalpaper.locationUtilities.DefaultLocationClient
 import com.example.finalpaper.R
@@ -55,7 +56,7 @@ import java.util.Date
 import java.util.Locale
 
 @Composable
-fun MapScreen(ttsController: TextToSpeechController) {
+fun MapScreen(ttsController: TextToSpeechController, mapViewModel: MapViewModel = viewModel()) {
     val viewModel: PermissionsViewModel = viewModel()
     val dialogQueue = viewModel.visiblePermissionDialogQueue
     val context = LocalContext.current
@@ -149,6 +150,7 @@ fun MapScreen(ttsController: TextToSpeechController) {
                     MarkerState()
                 }
                 var showOnClickMarker by remember { mutableStateOf(false) }
+                val pois by mapViewModel.pois.collectAsState()
 
                 GoogleMap(
                     modifier = Modifier.fillMaxSize(),
@@ -179,6 +181,7 @@ fun MapScreen(ttsController: TextToSpeechController) {
                             state = recordingMarkerState,
                             title = "Click to Hear Voice Recording",
                             snippet = "Recorded at ${getFormattedTime(recording.timestamp)}",
+                            icon = bitmapFromVector(context, R.drawable.baseline_record_voice_over_24),
                             onInfoWindowClick = {
                                 if (state.isPlayingRecording) {
                                     voiceRecordingViewModel.stopAudio()
@@ -186,6 +189,14 @@ fun MapScreen(ttsController: TextToSpeechController) {
                                     voiceRecordingViewModel.playAudio(recording.fileName)
                                 }
                             }
+                        )
+                    }
+                    pois.forEach { poi ->
+                        val poiMarkerState = MarkerState(position = LatLng(poi.geometry.location.lat, poi.geometry.location.lng))
+                        Marker(
+                            state = poiMarkerState,
+                            title = poi.name,
+                            icon = bitmapFromVector(context, R.drawable.baseline_not_listed_location_24)
                         )
                     }
                 }
@@ -225,7 +236,8 @@ fun MapScreen(ttsController: TextToSpeechController) {
                         currentLocation = currentLocation,
                         context = context,
                         dao = dao,
-                        ttsController = ttsController
+                        ttsController = ttsController,
+                        mapViewModel = mapViewModel
                     )
                 }
             }
